@@ -21,12 +21,12 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 
 ### Performance Considerations
 
- -For larger gcode files over 30,000 lines, performance might vary based on hardware capabilities. 
+ - For larger gcode files over 30,000 lines, performance might vary based on hardware capabilities. 
 
 ### Installation (or lack there of)
 
 1. **Download the repository:**
--You can download the project as a ZIP file from GitHub or clone it if you prefer:
+- You can download the project as a ZIP file from GitHub or clone it if you prefer:
      
 2. **Run Locally:**
 - No server needed; just open `index.html` in your web browser by double-clicking it or drag it into your browser.
