@@ -103,4 +103,4 @@ This project is licensed under the [MIT License](LICENSE.md) - see the LICENSE.m
 
 ## Contact
 
-For any questions or suggestions, feel free to open an issue or contact [Your Name or Contact Info].
+For any questions or suggestions, feel free to open an issue.
