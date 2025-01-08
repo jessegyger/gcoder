@@ -47,33 +47,33 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
   - Search Slider (Far right scroll bar): A vertical slider that lets you jump to specific search terms by scrolling.
 
    - Key Bindings:
-    - Arrow Up/Down: Move to the next/previous G-code line.
-    - Shift + Arrow Up/Down: Move by search phrase up or down.
-    - Spacebar: Toggle play/pause of G-code simulation (when textarea not focused).
-    - Double Click on Points: Jump to the corresponding line in the G-code editor.
-    - Enter key in search: Go to next search match.
-    - Shift + Enter key in search: Go to previous search match.
-    - Escape: Clears measurement selections.
-    - 
+      - Arrow Up/Down: Move to the next/previous G-code line.
+      - Shift + Arrow Up/Down: Move by search phrase up or down.
+      - Spacebar: Toggle play/pause of G-code simulation (when textarea not focused).
+      - Double Click on Points: Jump to the corresponding line in the G-code editor.
+      - Enter key in search: Go to next search match.
+      - Shift + Enter key in search: Go to previous search match.
+      - Escape: Clears measurement selections.
+  
   - Pan, Zoom, Orbit:
-    - Pan: Click-drag on the canvas with the mouse.
-    - Zoom: Use the mouse scroll wheel or pinch on touch devices.
-    - Orbit: Right-click or Shift + Left-click and drag to rotate the view around the model.
+      - Pan: Click-drag on the canvas with the mouse.
+      - Zoom: Use the mouse scroll wheel or pinch on touch devices.
+      - Orbit: Right-click or Shift + Left-click and drag to rotate the view around the model.
   
   - Pan, Zoom, Orbit: (Touch)
-    -Pan: Single finger touch and drag
-    -Zoom: Two finger pinch to zoom
-    -Orbit: Three finger touch and drag
+      -Pan: Single finger touch and drag
+      -Zoom: Two finger pinch to zoom
+      -Orbit: Three finger touch and drag
 
   - Buttons for:
-    - Layer Navigation: Move to previous (🔼) or next (🔽) layer.
-    - Speed Control: Adjust simulation speed with ⏪ (slow down) and ⏩ (fast forward).
-    - Toggle Views: Show/hide travel lines (🔹) and switch between thin and thick line representation (║).
-    - Simulation: Play or pause (▶️), go to top (⏫), bottom (⏬), move line up (⬆️) or down (⬇️).
+      - Layer Navigation: Move to previous (🔼) or next (🔽) layer.
+      - Speed Control: Adjust simulation speed with ⏪ (slow down) and ⏩ (fast forward).
+      - Toggle Views: Show/hide travel lines (🔹) and switch between thin and thick line representation (║).
+      - Simulation: Play or pause (▶️), go to top (⏫), bottom (⏬), move line up (⬆️) or down (⬇️).
 
 - **Save:** 
-  - Save G-code: Saves the current G-code in the editor to a file.
-  - Load File: Loads G-code from a file into the editor. Supports drag and drop or file selection.
+    - Save G-code: Saves the current G-code in the editor to a file.
+    - Load File: Loads G-code from a file into the editor. Supports drag and drop or file selection.
 
 ## Code Structure
   - **index.html:** Main HTML file with the structure for the viewer and editor.
