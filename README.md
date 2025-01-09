@@ -41,7 +41,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
   - Render Limit: Controls how many lines of G-code are rendered at once.
 
 - **Interact:** 
-  - Search: Search for G-code commands or by layer. Use Enter to go to the next match, Shift + Enter for the previous match.
+  - Search: Search anything or by specific layer delimiter. Use Enter to go to the next match, Shift + Enter for the previous match.
   - Measurement: Click on two points in the 3D visualization to measure distances in XY and Z planes.
   - Search Slider (Far right scroll bar): A vertical slider that lets you jump to specific search terms by scrolling.
 
@@ -58,6 +58,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
       - Pan: Click-drag on the canvas with the mouse.
       - Zoom: Use the mouse scroll wheel or pinch on touch devices.
       - Orbit: Right-click or Shift + Left-click and drag to rotate the view around the model.
+        
   - Pan, Zoom, Orbit (Touch):        
       - Pan: Single finger touch and drag
       - Zoom: Two finger pinch to zoom
