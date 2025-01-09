@@ -17,7 +17,6 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 ### Prerequisites
 
   - Web Browser with WebGL support (for Three.js)
-  - Basic understanding of G-code and 3D printing concepts
 
 ### Performance Considerations
 
