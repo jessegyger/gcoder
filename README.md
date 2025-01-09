@@ -6,7 +6,7 @@ A web-based tool for visualizing and editing G-code for 3D printing, built with 
 
 This project provides a comprehensive interface for 3D printing enthusiasts to view, edit, and analyze G-code files directly in the browser, even without an internet connection. Key features include:
 
-  - **Real-time 3D Visualization:** See your G-code in 3D as you scroll through your gcode.
+  - **Real-time 3D Visualization:** See your G-code in 3D as you scroll through your code.
   - **Interactive Editing:** Modify G-code directly with immediate visual feedback.
   - **Layer Navigation:** Easily jump between layers with custom search functionality.
   - **Measurement Tools:** Measure distances in the XY and Z planes for better understanding of your print paths.
