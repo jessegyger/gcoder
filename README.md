@@ -100,7 +100,7 @@ This project is licensed under the [MIT License](LICENSE.md) - see the LICENSE.m
 ## Acknowledgments
 
 - Three.js for the amazing 3D library.
-- All contributors and testers who helped polish this tool.
+- All contributors and testers who helped refine this tool.
 
 ## Contact
 
