@@ -20,7 +20,8 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 
 ### Performance Considerations
 
- - For larger gcode files over 30,000 lines, performance might vary based on hardware capabilities. 
+ - For larger gcode files over 30,000 lines, performance might vary based on hardware capabilities.
+ - If your code is above 30k lines, (⬅️) will appear to click to update the visualization after editing.
 
 ### Installation (or lack thereof)
 
