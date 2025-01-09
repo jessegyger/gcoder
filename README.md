@@ -63,13 +63,10 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
       - Zoom: Two finger pinch to zoom
       - Orbit: Three finger touch and drag
 
-
-
   - Buttons for:
-      - Layer Navigation: Move to previous (🔼) or next (🔽) layer.
-      - Speed Control: Adjust simulation speed with ⏪ (slow down) and ⏩ (fast forward).
+      - Code Navigation: Move to previous (⬆️) or next (⬇️) line, go to top (⏫), or bottom (⏬)
       - Toggle Views: Show/hide travel lines (🔹) and switch between thin and thick line representation (║).
-      - Simulation: Play or pause (▶️), go to top (⏫), bottom (⏬), move line up (⬆️) or down (⬇️).
+      - Simulation: Play or pause (▶️) and adjust simulation speed with (⏪) and (⏩).
 
 - **Save:** 
     - Save G-code: Saves the current G-code in the editor to a file.
