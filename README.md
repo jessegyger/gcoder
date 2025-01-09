@@ -60,7 +60,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
       - Zoom: Use the mouse scroll wheel or pinch on touch devices.
       - Orbit: Right-click or Shift + Left-click and drag to rotate the view around the model.
   
-  - Pan, Zoom, Orbit: (Touch)
+  - Pan, Zoom, Orbit (Touch):
       -Pan: Single finger touch and drag
       -Zoom: Two finger pinch to zoom
       -Orbit: Three finger touch and drag
