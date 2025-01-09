@@ -133,178 +133,174 @@ function setup3js(buildPlateX = 256, buildPlateY = 256) {
     }
 
     function setupEventListeners(element) {
-    let isRightClickDragging = false;
-    let rightClickStartX = null, rightClickStartY = null;		
-    
-    element.addEventListener('mousedown', (event) => {
-        if (event.button === 0) {
-            isDragging = true;
-            previousMouseX = event.clientX;
-            previousMouseY = event.clientY;
-        } else if (event.button === 2) {
-            isRightClickDragging = true;
-            rightClickStartX = event.clientX;
-            rightClickStartY = event.clientY;
-            event.preventDefault();
-        }
-    });
+		
+		let isRightClickDragging = false;
+		let rightClickStartX = null, rightClickStartY = null;		
+		
+		element.addEventListener('mousedown', (event) => {
+			if (event.button === 0) {
+				isDragging = true;
+				previousMouseX = event.clientX;
+				previousMouseY = event.clientY;
+			} else if (event.button === 2) {
+				isRightClickDragging = true;
+				rightClickStartX = event.clientX;
+				rightClickStartY = event.clientY;
+				event.preventDefault();
+			}
+		});
 
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-        isRightClickDragging = false;
-        previousMouseX = null;
-        previousMouseY = null;
-        rightClickStartX = null;
-        rightClickStartY = null;
-    });
+		window.addEventListener('mouseup', () => {
+			isDragging = false;
+			isRightClickDragging = false;
+			previousMouseX = null;
+			previousMouseY = null;
+			rightClickStartX = null;
+			rightClickStartY = null;
+		});
 
+		window.addEventListener('mousemove', (event) => {
+			if (isDragging && previousMouseX !== null && previousMouseY !== null) {
+				const deltaX = event.clientX - previousMouseX;
+				const deltaY = event.clientY - previousMouseY;
 
+				if (event.shiftKey) {
+					// Left-click + shift key rotation logic
+					angleZ += deltaX * 0.01;
+					angleX += deltaY * 0.01;
+				} else {
+						
+					const currentZ = camera.position.z;
+					let panSpeed = .2
+					positionX += deltaX * panSpeed;
+					positionY -= deltaY * panSpeed;
+				}
 
+				updateTransformations();
+				previousMouseX = event.clientX;
+				previousMouseY = event.clientY;
+				renderIfNeeded();
+			} else if (isRightClickDragging && rightClickStartX !== null && rightClickStartY !== null) {
+				const deltaX = event.clientX - rightClickStartX;
+				const deltaY = event.clientY - rightClickStartY;
 
-window.addEventListener('mousemove', (event) => {
-    if (isDragging && previousMouseX !== null && previousMouseY !== null) {
-        const deltaX = event.clientX - previousMouseX;
-        const deltaY = event.clientY - previousMouseY;
+				angleZ += deltaX * 0.01;
+				angleX += deltaY * 0.01;
 
-        if (event.shiftKey) {
-            // Left-click + shift key rotation logic
-            angleZ += deltaX * 0.01;
-            angleX += deltaY * 0.01;
-        } else {
-				
-            const currentZ = camera.position.z;
-			let panSpeed = .2
-            positionX += deltaX * panSpeed;
-            positionY -= deltaY * panSpeed;
-        }
-
-        updateTransformations();
-        previousMouseX = event.clientX;
-        previousMouseY = event.clientY;
-        renderIfNeeded();
-    } else if (isRightClickDragging && rightClickStartX !== null && rightClickStartY !== null) {
-        const deltaX = event.clientX - rightClickStartX;
-        const deltaY = event.clientY - rightClickStartY;
-
-        angleZ += deltaX * 0.01;
-        angleX += deltaY * 0.01;
-
-        updateTransformations();
-        rightClickStartX = event.clientX;
-        rightClickStartY = event.clientY;
-        renderIfNeeded();
-    }
-});
+				updateTransformations();
+				rightClickStartX = event.clientX;
+				rightClickStartY = event.clientY;
+				renderIfNeeded();
+			}
+		});
 
 
-  element.addEventListener('contextmenu', (event) => {
-      event.preventDefault();
-  });
+		  element.addEventListener('contextmenu', (event) => {
+			  event.preventDefault();
+		  });
 
-  element.addEventListener('wheel', (event) => {
-      zoom -= event.deltaY * 0.0003;
-      zoom = Math.max(0.01, Math.min(100, zoom));
-      updateTransformations();
-      renderIfNeeded();
-      event.preventDefault();
-  });
+		  element.addEventListener('wheel', (event) => {
+			  zoom -= event.deltaY * 0.0003;
+			  zoom = Math.max(0.01, Math.min(100, zoom));
+			  updateTransformations();
+			  renderIfNeeded();
+			  event.preventDefault();
+		  });
 
-  window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderIfNeeded();
-  });
+		  window.addEventListener('resize', () => {
+			  camera.aspect = window.innerWidth / window.innerHeight;
+			  camera.updateProjectionMatrix();
+			  renderer.setSize(window.innerWidth, window.innerHeight);
+			  renderIfNeeded();
+		  });
 
-  document.getElementById('home-button').addEventListener('click', () => {
-      positionX = DEFAULT_POSITION.cube.x;
-      positionY = DEFAULT_POSITION.cube.y;
-      angleX = DEFAULT_POSITION.cube.rotX;
-      angleY = DEFAULT_POSITION.cube.rotY;
-      angleZ = DEFAULT_POSITION.cube.rotZ;
-      zoom = DEFAULT_POSITION.zoom;
+		  document.getElementById('home-button').addEventListener('click', () => {
+			  positionX = DEFAULT_POSITION.cube.x;
+			  positionY = DEFAULT_POSITION.cube.y;
+			  angleX = DEFAULT_POSITION.cube.rotX;
+			  angleY = DEFAULT_POSITION.cube.rotY;
+			  angleZ = DEFAULT_POSITION.cube.rotZ;
+			  zoom = DEFAULT_POSITION.zoom;
 
-      updateTransformations();
-      renderIfNeeded();
-  });
-
-
-  element.addEventListener('touchstart', onTouchStart, { passive: false });
-  element.addEventListener('touchmove', onTouchMove, { passive: false });
-  element.addEventListener('touchend', onTouchEnd);
-
-  let touchStartX = 0, touchStartY = 0;
-  let lastTouchX = 0, lastTouchY = 0;
-
-  function onTouchStart(event) {
-      event.preventDefault();
-      const touch = event.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      lastTouchX = touchStartX;
-      lastTouchY = touchStartY;
-      isDragging = true;
-  }
-
-let zoomSensitivity = 0.001;
-
-function onTouchMove(event) {
-    event.preventDefault();
-    if (event.touches.length === 1) {
-        const touch = event.touches[0];
-        const currentX = touch.clientX;
-        const currentY = touch.clientY;
-        const deltaX = currentX - lastTouchX;
-        const deltaY = currentY - lastTouchY;
-
-        const panSpeed = 0.2;
-        positionX += deltaX * panSpeed;
-        positionY -= deltaY * panSpeed;
-
-        lastTouchX = currentX;
-        lastTouchY = currentY;
-    } else if (event.touches.length === 2) {
-        const touch1 = event.touches[0];
-        const touch2 = event.touches[1];
-
-        const prevTouch1 = { x: lastTouchX, y: lastTouchY };
-        const prevTouch2 = { x: event.touches[1].clientX, y: event.touches[1].clientY };
-
-        const prevDistance = Math.hypot(prevTouch2.x - prevTouch1.x, prevTouch2.y - prevTouch1.y);
-        const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
-        const zoomDelta = (currentDistance - prevDistance) * zoomSensitivity; // Use zoomSensitivity here
-        zoom -= zoomDelta;
-        zoom = Math.max(0.01, Math.min(100, zoom));
-
-        lastTouchX = touch1.clientX;
-        lastTouchY = touch1.clientY;
-    } else if (event.touches.length >= 3) {
-        const touch = event.touches[0];
-        const currentX = touch.clientX;
-        const currentY = touch.clientY;
-        const deltaX = currentX - lastTouchX;
-        const deltaY = currentY - lastTouchY;
-
-        const orbitSpeed = 0.01;
-        angleZ += deltaX * orbitSpeed;
-        angleX += deltaY * orbitSpeed;
-
-        angleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, angleX));
-
-        lastTouchX = currentX;
-        lastTouchY = currentY;
-    }
-
-    updateTransformations();
-    renderIfNeeded();
-}
+			  updateTransformations();
+			  renderIfNeeded();
+		  });
 
 
-    function onTouchEnd(event) {
-        isDragging = false;
-    }
+		  element.addEventListener('touchstart', onTouchStart, { passive: false });
+		  element.addEventListener('touchmove', onTouchMove, { passive: false });
+		  element.addEventListener('touchend', onTouchEnd);
 
-        
+		  let touchStartX = 0, touchStartY = 0;
+		  let lastTouchX = 0, lastTouchY = 0;
+
+		  function onTouchStart(event) {
+			  event.preventDefault();
+			  const touch = event.touches[0];
+			  touchStartX = touch.clientX;
+			  touchStartY = touch.clientY;
+			  lastTouchX = touchStartX;
+			  lastTouchY = touchStartY;
+			  isDragging = true;
+		  }
+
+		let zoomSensitivity = 0.001;
+
+		function onTouchMove(event) {
+			event.preventDefault();
+			if (event.touches.length === 1) {
+				const touch = event.touches[0];
+				const currentX = touch.clientX;
+				const currentY = touch.clientY;
+				const deltaX = currentX - lastTouchX;
+				const deltaY = currentY - lastTouchY;
+
+				const panSpeed = 0.2;
+				positionX += deltaX * panSpeed;
+				positionY -= deltaY * panSpeed;
+
+				lastTouchX = currentX;
+				lastTouchY = currentY;
+			} else if (event.touches.length === 2) {
+				const touch1 = event.touches[0];
+				const touch2 = event.touches[1];
+
+				const prevTouch1 = { x: lastTouchX, y: lastTouchY };
+				const prevTouch2 = { x: event.touches[1].clientX, y: event.touches[1].clientY };
+
+				const prevDistance = Math.hypot(prevTouch2.x - prevTouch1.x, prevTouch2.y - prevTouch1.y);
+				const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+				const zoomDelta = (currentDistance - prevDistance) * zoomSensitivity; // Use zoomSensitivity here
+				zoom -= zoomDelta;
+				zoom = Math.max(0.01, Math.min(100, zoom));
+
+				lastTouchX = touch1.clientX;
+				lastTouchY = touch1.clientY;
+			} else if (event.touches.length >= 3) {
+				const touch = event.touches[0];
+				const currentX = touch.clientX;
+				const currentY = touch.clientY;
+				const deltaX = currentX - lastTouchX;
+				const deltaY = currentY - lastTouchY;
+
+				const orbitSpeed = 0.01;
+				angleZ += deltaX * orbitSpeed;
+				angleX += deltaY * orbitSpeed;
+
+				angleX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, angleX));
+
+				lastTouchX = currentX;
+				lastTouchY = currentY;
+			}
+
+			updateTransformations();
+			renderIfNeeded();
+		}
+
+
+		function onTouchEnd(event) {
+			isDragging = false;
+		}   
     }
 
     return {
