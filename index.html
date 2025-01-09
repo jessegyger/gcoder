@@ -1285,44 +1285,6 @@ function handleFile(file) {
 
 
 
-function autoLoadExampleGcode() {
-    const gcodeFiles = ['gt.gcode', 'bitcoin.gcode'];
-	
-    // Randomly select one of the files
-    const randomIndex = Math.floor(Math.random() * gcodeFiles.length);
-    const chosenFile = gcodeFiles[randomIndex];
-
-    fetch(chosenFile)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok for ${chosenFile}`);
-        }
-        return response.text();
-    })
-    .then(gcode => {
-        document.getElementById('codeInput').value = gcode;
-        const codeLines = gcode.split('\n');
-        document.getElementById('line-numbers').innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
-        parseGCode(gcode);    
-        updatePaddingAndEnsure(0);
-        updateSliderAndLayerPositions();
-        logCurrentLine();
-    })
-    .catch(error => {
-        console.error(`Failed to load the example G-code file (${chosenFile}):`, error);
-        alert(`Failed to load example G-code (${chosenFile}). Please check the file or network connection.`);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    autoLoadExampleGcode();
-});
-
-
-
-
-
-
 document.getElementById('save-gcode-button').addEventListener('click', function() {
     const textToSave = document.getElementById('codeInput').value;
     const filename = 'gcode_export.gcode';
