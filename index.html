@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gcoder</title>
+    <link rel="icon" type="image/x-icon" href="gcoder.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="full-body">
+        <div style="display:none;" id="loading-screen">
+            <div class="loader"></div>
+        </div>
+
+        <div id="canvasContainer"></div>
+        <div id="bottom-overlay"></div>     
+        <div id="measurement-display"></div>
+        
+        <div id="data-pane">
+            <div width="300px" id="current-line-display"></div>
+            <div width="300px" id="gcode-command-name"></div>
+            <div width="300px" id="gcode-command-description"></div>                  
+        </div>
+
+        <div id="draggable-pane">   
+            <div id="slider-container">
+                <div id="slider"></div>
+            </div>
+            <div id="line-numbers"></div>
+            <textarea id="codeInput" placeholder="Enter Gcode" autofocus></textarea>                
+            <div id="layer-slider-container">
+                <div id="layer-slider"></div>
+            </div>
+            <div id="resize-handle"></div>      
+        </div>
+        
+        <div id="ui-buttons">
+            <div id="z-container">
+                <button id="info-button" class="layer-button">ℹ️</button>
+                <button id="play-button" class="layer-button" title="Play or pause simulation of G-code execution">▶️</button>
+                <button id="slow-down" class="layer-button" title="Decrease simulation speed">⏪</button>
+                <button id="speed-display" class="layer-button" disabled title="Current simulation speed">1x</button>
+                <button id="fast-forward" class="layer-button" title="Increase simulation speed">⏩</button>
+                
+                <div id="build-plate-size">
+                    <label for="buildPlateX" title="Set the width of the build plate">X:</label>
+                    <input type="number" id="buildPlateX" value="256" min="1" title="Enter the X dimension of the build plate in mm">
+                    <label for="buildPlateY" title="Set the depth of the build plate">Y:</label>
+                    <input type="number" id="buildPlateY" value="256" min="1" title="Enter the Y dimension of the build plate in mm">
+                </div>	
+                
+                <button id="layer-up" class="layer-button" title="Move to the previous layer">🔼</button>
+                <input type="text" id="searchInput" placeholder="Search..." title="Search for specific G-code commands or layers">
+                <button id="layer-down" class="layer-button" title="Move to the next layer">🔽</button>
+                <div id="current-z-height" class="z-display" title="Current Z-axis height">Z: 0.00</div>
+            </div>
+
+            <button id="go-to-top" class="layer-button" title="Go to the first line of G-code">⏫</button>
+            <button id="line-up" class="layer-button" title="Move up one line in the G-code">⬆️</button>
+            <button id="line-down" class="layer-button" title="Move down one line in the G-code">⬇️</button>
+            <button id="go-to-bottom" class="layer-button" title="Go to the last line of G-code">⏬</button>
+            
+            <br>
+
+            <button id="update-gcode-button" class="layer-button" style="display: none;" title="Update G-code visualization">⬅️</button>
+            <button id="save-gcode-button" class="layer-button" title="Save current G-code to file">💾</button>
+            <button id="load-file-button" class="layer-button" title="Load G-code from a file">📂</button>
+            <button id="clear-display" class="layer-button" title="Clear the current G-code and reset view">🗑️</button>
+            <br>
+            <button id="home-button" class="layer-button" title="Return to home position">🏠</button>
+            <button id="toggle-travel-lines" class="layer-button" title="Toggle visibility of travel moves">🔹</button>
+            <button id="toggle-thick-lines" class="layer-button" title="Toggle between thin and thick line representation">║</button>
+            
+            <br>
+            
+            <div id="render-limit-container">
+                <input type="range" id="render-limit" style="writing-mode: vertical-lr; direction: rtl" title="Adjust how many lines of G-code to render at one time">
+                <input type="number" id="render-limit-display" value="1" min="1" title="Set the number of G-code lines to display at one time">
+            </div>
+        </div>
+
+        <div id="render-limit-container">
+            <input type="range" id="render-limit" style="writing-mode: vertical-lr; direction: rtl"> 
+            <input type="number" id="render-limit-display" value="1" min="1">
+        </div>
+    </div>
+	
+	
+<!-- Modal -->
+<div id="info-modal" style="display: none;">
+    <button id="modal-close">✖</button>
+    <div id="info-content">
+	
+<pre>	
+                     _           
+  __ _  ___ ___   __| | ___ _ __ 
+ / _` |/ __/ _ \ / _` |/ _ \ '__|
+| (_| | (_| (_) | (_| |  __/ |   
+ \__, |\___\___/ \__,_|\___|_|   
+ |___/  
+ 
+</pre>	
+		<div class="feature">Search</div>
+		<div class="description">Type in the search box to find specific G-code commands or layers. Use <strong>Enter</strong> to go to the next match, <strong>Shift + Enter</strong> for the previous match.</div>
+
+		<div class="feature">Measurement</div>
+		<div class="description">Click on two points in the 3D visualization to measure distances in XY and Z planes. Useful for understanding spatial relationships in your G-code.</div>
+
+		<div class="feature">Scroll to Render (scroll bar to the left of the gcode)</div>
+		<div class="description">As you scroll through the G-code in the editor, the 3D visualization updates in real-time to reflect the current line.</div>
+
+		<div class="feature">Search Slider (Far right scroll bar)</div>
+		<div class="description">A vertical slider that lets you jump to specific search terms by scrolling.</div>
+
+		<div class="feature">Render Limit</div>
+		<div class="description">Controls how many lines of G-code are rendered at once.</div>
+	
+		<div class="feature">G-code Input</div>
+		<div class="description">Allows you to directly type, paste, load, or drag and drop G-code into the editor.</div>
+
+		<div class="feature">Current Line Indicator</div>
+		<div class="description">The line highlighted in green in the code pane is the current gcode line being exectued</div>
+
+		<div class="feature">Build Plate Size</div>
+		<div class="description">Adjustable inputs for X and Y dimensions of the build plate, allowing you to customize the visualization to match your actual printer's specifications.</div>
+
+
+		<div class="feature">Key Bindings</div>
+		<div class="description">
+			<ul style="margin-left: 20px;">
+				<li><strong>Arrow Up/Down:</strong>Move to next/previous gocde line.</li>
+				<li><strong>Shift + Arrow Up/Down:</strong> Move by search phrase up or down.</li>
+				<li><strong>Spacebar:</strong> Toggle play/pause of G-code simulation (when textarea not focused).</li>
+				<li><strong>Double Click on Points:</strong> Jump to the corresponding line in the G-code editor.</li>
+				<li><strong>Enter key in search:</strong> Go to next search match.</li>
+				<li><strong>Shift + Enter key in search:</strong> Go to previous search match.</li>
+				<li><strong>Escape: </strong>Clears measurement selections.</li>
+			</ul>
+		</div>	
+		
+		<div class="feature">Pan, Zoom, Orbit</div>
+		<div class="description">
+			<ul style="margin-left: 20px;">
+				<li><strong>Pan:</strong> Click-drag on the canvas with the mouse.</li>
+				<li><strong>Zoom:</strong> Use the mouse scroll wheel or pinch on touch devices.</li>
+				<li><strong>Orbit:</strong> Right-click or Shift + Left-click and drag to rotate the view around the model.</li>
+			</ul>
+		</div>
+		
+		<div class="feature">Pan, Zoom, Orbit (Touch)</div>
+		<div class="description">
+			<ul style="margin-left: 20px;">
+				<li><strong>Pan: </strong>Single finger touch and drag</li>
+				<li><strong>Zoom: </strong>Two finger pinch to zoom</li>
+				<li><strong>Orbit: </strong>Three finger touch and drag</li>
+			</ul>
+		</div>
+		
+		
+		<div class="feature">🔼 Layer Up</div>
+		<div class="description">Moves the view to the previous layer in the G-code sequence. Also, pressing <strong>Shift + Enter</strong> while in the search input will function similarly.</div>
+
+		<div class="feature">🔽 Layer Down</div>
+		<div class="description">Advances the view to the next layer. Pressing <strong>Enter</strong> in the search input will move to the next match.</div>
+
+		<div class="feature">⏫ Go to Top</div>
+		<div class="description">Jumps to the first line of G-code. Click the button or use the corresponding keyboard shortcut if available.</div>
+
+		<div class="feature">⬆️ Line Up</div>
+		<div class="description">Moves up one line in the G-code. Also, you can use arrow keys when not focused on text input - <strong>Up Arrow</strong> moves up one line.</div>
+
+		<div class="feature">⬇️ Line Down</div>
+		<div class="description">Moves down one line in the G-code. Use <strong>Down Arrow</strong> when not focused on text input for the same effect.</div>
+
+		<div class="feature">⏬ Go to Bottom</div>
+		<div class="description">Jumps to the last line of G-code. Click the button or use the corresponding keyboard shortcut if available.</div>
+
+		<div class="feature">💾 Save G-code</div>
+		<div class="description">Saves the current G-code in the editor to a file.</div>
+
+		<div class="feature">📂 Load File</div>
+		<div class="description">Loads G-code from a file into the editor. Supports drag and drop or file selection.</div>
+
+		<div class="feature">🗑️ Clear Display</div>
+		<div class="description">Clears all G-code from the editor, resets the visualization, and prepares for a new G-code input.</div>
+
+		<div class="feature">🏠 Home</div>
+		<div class="description">Resets the view to the home position, which can mean either the start of the G-code or a predefined home state for the visualization.</div>
+
+		<div class="feature">🔹 Toggle Travel Lines</div>
+		<div class="description">Switches visibility of the travel moves (non-printing movements) in the G-code visualization.</div>
+
+		<div class="feature">║ Toggle Thick Lines</div>
+		<div class="description">Toggles between thin and thick line representations for printing moves.</div>
+
+		<div class="feature">▶️ Play/Pause</div>
+		<div class="description">Starts or stops the simulation of G-code execution. Press <strong>Spacebar</strong> (when not focused on text) to toggle play/pause.</div>
+
+		<div class="feature">⏪ Slow Down</div>
+		<div class="description">Decreases the simulation speed. Click or use keyboard shortcuts for speed adjustment.</div>
+
+		<div class="feature">1x Speed Display</div>
+		<div class="description">Shows the current playback speed of the G-code simulation.</div>
+
+		<div class="feature">⏩ Fast Forward</div>
+		<div class="description">Increases the speed of the G-code simulation. Click or use keyboard shortcuts for speed adjustment.</div>
+
+		<div class="feature">ℹ️ Info</div>
+		<div class="description">Displays this information modal.</div>
+
+	</div>	
+</div>	
+	
+</body>
+
+
+<script src="./three.js"></script>
+<script src="./3.js"></script>
+<script src="gcodeCommands.js"></script>
+<script>
+
+
+const textarea = document.getElementById('codeInput');
+
+let buildPlateX = 256;
+let buildPlateY = 256;
+
+({  scene,
+	camera, 
+	renderer, 
+	cube, 
+	setupEventListeners, 
+	renderIfNeeded, 
+	updateTransformations, 
+	DEFAULT_POSITION, 
+	nozzle } = setup3js(buildPlateX, buildPlateY));
+
+document.getElementById('canvasContainer').appendChild(renderer.domElement);
+setupEventListeners(renderer.domElement);
+
+let allLineSegments = [];
+let currentPosition = { x: 0, y: 0, z: 0, e: 0 };
+let isRelativeE = false;
+let lineCount = 0;
+let thickLines = false;
+let showTravelLines = true;
+let currentStepIndex = 0;
+let currentZHeight = 0;
+let angleX = 0, angleY = 0, angleZ = 0;
+let positionX = 0, positionY = 0;
+let zoom = 0.5;
+let sceneChanged = false;
+let sliceLimit = 200;
+const renderLimitSlider = document.getElementById('render-limit');
+const renderLimitDisplay = document.getElementById('render-limit-display');
+renderLimitSlider.max = 1000;
+renderLimitSlider.value = sliceLimit;
+renderLimitDisplay.value = sliceLimit;
+const PRINTING_OPACITY = 1;
+const NON_PRINTING_OPACITY = .8;
+const Z_OFFSET = 0.6;
+const printingColor = 0x00CC00;
+const travelColor = 0x66CCFF;
+const rapidMoveColor = 0xCC00CC;
+
+
+
+
+//// updateCurrentLine runs for every scroll position ////
+function updateCurrentLine() {
+    const lineHeight = 14;
+    const currentStepIndex = Math.floor(textarea.scrollTop / lineHeight);
+    const startLine = Math.max(0, currentStepIndex - sliceLimit);
+
+    let currentStart = { x: 0, y: 0, z: 0 };
+
+    for (let i = 0; i < allLineSegments.length; i++) {
+        const segment = allLineSegments[i];
+        if (segment.lineNumber < startLine || segment.lineNumber > currentStepIndex || 
+            (!showTravelLines && (segment.printType === 'travel' || segment.printType === 'rapid'))) {
+            segment.line.visible = false;
+            if (segment.point) segment.point.visible = false;
+        } else {
+            segment.line.visible = true;
+            if (segment.point) {
+                segment.point.visible = true;
+                segment.point.material.opacity = 0;
+                segment.point.position.set(
+                    segment.end.y - (buildPlateX / 2),
+                    -segment.end.x + (buildPlateY / 2),
+                    segment.end.z + Z_OFFSET
+                );
+            }
+
+            let start = i > 0 ? allLineSegments[i - 1].end : currentStart;
+        }
+        currentStart = { ...segment.end };
+    }
+
+    const lastVisibleSegment = allLineSegments.findLast(
+        segment =>
+            segment.lineNumber <= currentStepIndex &&
+            segment.lineNumber >= startLine &&
+            (segment.printType === 'printing' || segment.printType === 'arc' || showTravelLines)
+    );
+
+    if (lastVisibleSegment) {
+        currentPosition = lastVisibleSegment.end;
+        currentZHeight = currentPosition.z;
+        document.getElementById('current-z-height').innerText = `Z: ${currentZHeight.toFixed(2)}mm`;
+
+        if (nozzle) {
+            nozzle.position.set(
+                lastVisibleSegment.end.y - buildPlateX / 2,
+                -lastVisibleSegment.end.x + buildPlateY / 2,
+                lastVisibleSegment.end.z + Z_OFFSET + 5
+            );
+        }
+    } else {
+        document.getElementById('current-z-height').innerText = 'Z: 0.00mm';
+        if (nozzle) {
+            nozzle.position.set(-128, 128, Z_OFFSET + 5);
+        }
+    }
+
+    sceneChanged = true;
+    renderer.render(scene, camera);
+
+}
+
+
+
+//// parseGcode runs once when new gcode is loaded ////
+function parseGCode(gcode) {
+    currentPosition = { x: 0, y: 0, z: 0, e: 0 };
+    isRelativePositioning = false;
+    isRelativeE = false;
+
+    const lines = gcode.split('\n');
+    lineCount = lines.length;
+
+    if (lineCount > 30000) {
+        showUpdateButton();
+    } else {
+        hideUpdateButton();
+    }
+	
+    renderLimitSlider.max = lineCount;
+    renderLimitSlider.value = lineCount;
+    renderLimitDisplay.value = lineCount;
+    sliceLimit = lineCount;
+    clearScene();
+
+    for (let i = 0; i < lineCount; i++) {
+        let line = lines[i].trim();
+        let newPosition = { ...currentPosition };
+        parseLine(line, i, newPosition);
+    }
+    updateCurrentLine();
+}
+
+
+
+
+
+function parseLine(line, lineNumber, position) {
+    const commentIndex = line.indexOf(';');
+    let cmd = commentIndex !== -1 ? line.slice(0, commentIndex).trim().toUpperCase() : line.trim().toUpperCase();
+
+    if (cmd === '') return;
+
+    if (cmd.startsWith('G90')) {
+        isRelativePositioning = false;
+        return;
+    } else if (cmd.startsWith('G91')) {
+        isRelativePositioning = true;
+        return;
+    }
+
+    let eValue = 0;
+    let i = 0;
+
+    while (i < cmd.length) {
+        if ('XYZE'.includes(cmd[i])) {
+            let axis = cmd[i].toLowerCase();
+            let start = i + 1;
+            let end = start;
+            while (end < cmd.length && cmd[end] !== ' ') end++;
+            let value = parseFloat(cmd.slice(start, end));
+
+            if (!isNaN(value)) {
+                if (axis === 'e') {
+                    if (isRelativeE) {
+                        position.e += value;
+                    } else {
+                        position.e = value;
+                    }
+                } else {
+                    if (isRelativePositioning) {
+                        position[axis] += value;
+                    } else {
+                        position[axis] = value;
+                    }
+                }
+            }
+
+            i = end;
+        } else {
+            i++;
+        }
+    }
+
+    processMovement(cmd, lineNumber, position, eValue);
+
+    currentPosition = { ...position };
+}
+
+
+//// ClearScene is only used in parseGcode ////
+function clearScene() {
+    while (allLineSegments.length) {
+        let segment = allLineSegments.pop();
+        if (segment.line) {
+            try {
+                if (segment.line.parent) {
+                    segment.line.parent.remove(segment.line);
+                }
+                scene.remove(segment.line);
+                if (segment.line.geometry) segment.line.geometry.dispose();
+                if (segment.line.material) segment.line.material.dispose();
+            } catch (error) {
+                console.error('Error disposing line:', error);
+            }
+        }
+        if (segment.point) {
+            scene.remove(segment.point);
+            cube.remove(segment.point);
+            if (segment.point.geometry) segment.point.geometry.dispose();
+            if (segment.point.material) segment.point.material.dispose();
+        }
+    }
+}
+
+
+
+
+//// processMovement is only used in parseGcode ////
+let runningStart = { x: 0, y: 0, z: 0 }; 
+function processMovement(cmd, lineNumber, position, eValue) {
+    let isMove = cmd.startsWith('G0') || cmd.startsWith('G1') || cmd.startsWith('G2') || cmd.startsWith('G3');
+    let isPrinting = cmd.includes('E') || cmd.startsWith('G2') || cmd.startsWith('G3');
+
+    if (isMove) {
+        let start = new THREE.Vector3(
+            runningStart.y - buildPlateX / 2,
+            -runningStart.x + buildPlateY / 2,
+            runningStart.z + Z_OFFSET
+        );
+
+        let end = new THREE.Vector3(
+            position.y - buildPlateX / 2,
+            -position.x + buildPlateY / 2,
+            position.z + Z_OFFSET
+        );
+
+        let lineGeometry = setupGeometry(start, end, isPrinting, cmd.startsWith('G0'), eValue);
+        cube.add(lineGeometry);
+
+        let pointGeometry = new THREE.BufferGeometry();
+        pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
+
+        let pointMaterial = new THREE.PointsMaterial({
+            color: 0x0000ff,
+            size: 15,
+            sizeAttenuation: false,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            depthTest: true
+        });
+
+        let point = new THREE.Points(pointGeometry, pointMaterial);
+        point.position.copy(end);
+        point.userData = {
+            lineNumber: lineNumber,
+            x: position.x,
+            y: position.y,
+            z: position.z
+        };
+
+        point.frustumCulled = false;
+        point.renderOrder = 10000;
+        cube.add(point);
+
+        allLineSegments.push({
+            line: lineGeometry,
+            point: point,
+            lineNumber: lineNumber,
+            end: { ...position },
+            printType: cmd.startsWith('G2') || cmd.startsWith('G3') ? 'arc' : cmd.startsWith('G0') ? 'rapid' : isPrinting ? 'printing' : 'travel'
+        });
+
+        runningStart = { ...position };
+    }
+}
+
+
+//// Raycasting and Point Selection and Measurement ////
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+raycaster.params.Points.threshold = 0.6;
+
+let lastClickedPoint = null;
+let secondClickedPoint = null;
+let temporaryLine = null;
+let persistentLine = null;
+let lastClickTime = 0;
+
+function onMouseMove(event) {
+
+    if (event.target === document.getElementById('render-limit')) return;
+
+    event.preventDefault();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    
+    const intersects = raycaster.intersectObjects(cube.children.filter(obj => obj.type === 'Points' && obj.visible));
+
+    cube.children.forEach(child => {
+        if (child.type === 'Points' && child !== lastClickedPoint && child !== secondClickedPoint) {
+            child.material.color.set(0xff0000);
+            child.material.opacity = 0;
+        }
+    });
+
+    if (intersects.length > 0) {
+        const point = intersects[0].object;
+        if (point !== lastClickedPoint && point !== secondClickedPoint) {
+            point.material.color.set(0x0000ff);
+            point.material.opacity = 1;
+        }
+        const data = point.userData;
+        document.getElementById('bottom-overlay').innerText = `Line ${data.lineNumber}: X:${data.x.toFixed(2)}, Y:${data.y.toFixed(2)}, Z:${data.z.toFixed(2)}`;
+
+        if (lastClickedPoint && lastClickedPoint !== point && !secondClickedPoint) {
+            const distanceXYZ = lastClickedPoint.position.distanceTo(point.position);
+            const distanceXY = Math.sqrt(
+                Math.pow(lastClickedPoint.position.x - point.position.x, 2) +
+                Math.pow(lastClickedPoint.position.y - point.position.y, 2)
+            );
+            const distanceZ = Math.abs(lastClickedPoint.position.z - point.position.z);
+
+            if (temporaryLine) {
+                cube.remove(temporaryLine);
+                temporaryLine.geometry.dispose();
+            }
+
+            const start = lastClickedPoint.position.clone();
+            const end = point.position.clone();
+            const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+            const material = new THREE.LineBasicMaterial({ 
+                color: 0xFFFF00, 
+                depthTest: false,
+                transparent: true, 
+                opacity: 1 
+            });
+            temporaryLine = new THREE.Line(geometry, material);
+            temporaryLine.renderOrder = 1;
+            temporaryLine.frustumCulled = false;
+            cube.add(temporaryLine);
+            document.getElementById('measurement-display').innerText = 
+                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
+                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
+                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
+        } else if (secondClickedPoint) {
+            const distanceXYZ = lastClickedPoint.position.distanceTo(secondClickedPoint.position);
+            const distanceXY = Math.sqrt(
+                Math.pow(lastClickedPoint.position.x - secondClickedPoint.position.x, 2) +
+                Math.pow(lastClickedPoint.position.y - secondClickedPoint.position.y, 2)
+            );
+            const distanceZ = Math.abs(lastClickedPoint.position.z - secondClickedPoint.position.z);
+            document.getElementById('measurement-display').innerText = 
+                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
+                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
+                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
+        }
+
+    } else {
+        document.getElementById('bottom-overlay').innerText = '';
+
+        // If no point is hovered but one or both points have been clicked
+        if (lastClickedPoint && !secondClickedPoint) {
+            document.getElementById('measurement-display').innerText = `Line ${lastClickedPoint.userData.lineNumber}: X:${lastClickedPoint.userData.x.toFixed(2)}, Y:${lastClickedPoint.userData.y.toFixed(2)}, Z:${lastClickedPoint.userData.z.toFixed(2)}`;
+        } else if (secondClickedPoint) {
+            const distanceXYZ = lastClickedPoint.position.distanceTo(secondClickedPoint.position);
+            const distanceXY = Math.sqrt(
+                Math.pow(lastClickedPoint.position.x - secondClickedPoint.position.x, 2) +
+                Math.pow(lastClickedPoint.position.y - secondClickedPoint.position.y, 2)
+            );
+            const distanceZ = Math.abs(lastClickedPoint.position.z - secondClickedPoint.position.z);
+            document.getElementById('measurement-display').innerText = 
+                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
+                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
+                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
+        } else {
+            document.getElementById('measurement-display').innerText = '';
+        }
+
+        if (temporaryLine) {
+            cube.remove(temporaryLine);
+            temporaryLine.geometry.dispose();
+            temporaryLine = null;
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+
+function onMouseClick(event) {
+
+    if (event.target === document.getElementById('render-limit')) return;
+
+    event.preventDefault();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    
+    const intersects = raycaster.intersectObjects(cube.children.filter(obj => obj.type === 'Points' && obj.visible));
+    
+    if (intersects.length > 0) {
+        const clickedPoint = intersects[0].object;
+        let currentTime = new Date().getTime();
+        
+        // Check for double click
+        if (currentTime - lastClickTime < 300) { 
+            const lineNumber = clickedPoint.userData.lineNumber + 1;
+            const lineHeight = 14;
+            document.getElementById('codeInput').scrollTop = lineHeight * (lineNumber - 1);
+            lineNumbersDiv.scrollTop = document.getElementById('codeInput').scrollTop;
+            updateSliderAndLayerPositions();
+            logCurrentLine();
+        } else {
+            if (!lastClickedPoint) {
+                // First click
+                lastClickedPoint = clickedPoint;
+                if (!clickedPoint.material.userData.originalColor) {
+                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
+                }
+                clickedPoint.material.color.setHex(0xFFFFFF);
+                clickedPoint.material.opacity = 1;
+            } else if (lastClickedPoint && !secondClickedPoint) {
+                // Second click
+                secondClickedPoint = clickedPoint;
+                if (!clickedPoint.material.userData.originalColor) {
+                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
+                }
+                clickedPoint.material.color.setHex(0xFFFFFF);
+                clickedPoint.material.opacity = 1;
+
+                if (temporaryLine) {
+                    // Turn the temporary line into a persistent one
+                    persistentLine = temporaryLine;
+                    temporaryLine = null;
+                } else {
+                    // If no temporary line, create one as persistent
+                    const start = lastClickedPoint.position.clone();
+                    const end = clickedPoint.position.clone();
+                    const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+                    persistentLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xFFFFFF }));
+                    cube.add(persistentLine);
+                }
+            } else {
+                // Reset on third click or by clicking another point
+                resetPointsAndLines();
+                lastClickedPoint = clickedPoint;
+
+                if (!clickedPoint.material.userData.originalColor) {
+                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
+                }
+                clickedPoint.material.color.setHex(0xFFFFFF);
+                clickedPoint.material.opacity = 1;
+            }
+        }
+        lastClickTime = currentTime;
+    } else {
+        // Reset if clicked outside a point
+        if (new Date().getTime() - lastClickTime >= 300) {
+            resetPointsAndLines();
+        }
+    }
+	
+    renderer.render(scene, camera);
+}
+
+function resetPointsAndLines() {
+    if (lastClickedPoint) {
+        lastClickedPoint.material.color.setHex(lastClickedPoint.material.userData.originalColor);
+        lastClickedPoint.material.opacity = 0;
+        lastClickedPoint = null;
+    }
+    if (secondClickedPoint) {
+        secondClickedPoint.material.color.setHex(secondClickedPoint.material.userData.originalColor);
+        secondClickedPoint.material.opacity = 0;
+        secondClickedPoint = null;
+    }
+    if (persistentLine) {
+        cube.remove(persistentLine);
+        persistentLine.geometry.dispose();
+        persistentLine = null;
+    }
+    if (temporaryLine) {
+        cube.remove(temporaryLine);
+        temporaryLine.geometry.dispose();
+        temporaryLine = null;
+    }
+    document.getElementById('measurement-display').innerText = '';
+    document.getElementById('bottom-overlay').innerText = '';
+}
+
+// Add event listener for the Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        resetPointsAndLines();
+        renderer.render(scene, camera);
+    }
+});
+
+document.addEventListener('mousemove', onMouseMove, false);
+document.getElementById('canvasContainer').addEventListener('click', onMouseClick, false);
+
+////End Raycasting and Point Selection ////
+
+
+
+
+
+//// Search Term Drop Down ////
+const commonSearchTerms = [
+    { term: ';LAYER:', description: '(Marlin, Cura)' },
+    { term: '; CHANGE_LAYER', description: '(Bambu Studio)' },
+    { term: ';LAYER_CHANGE', description: '(Cura)' },
+    { term: '; LAYER:', description: '(MatterControl)' },
+    { term: '; layer', description: '(PrusaSlicer, Simplify3D, KISSlicer, Repetier-Host)' },
+    { term: ';TYPE:', description: '(Cura, Bambu Studio)' },
+    { term: ';MESH:', description: '(Cura, Bambu Studio)' }
+];
+
+const searchOptionsDiv = document.createElement('div');
+searchOptionsDiv.id = 'searchOptions';
+searchOptionsDiv.style.cssText = 'display:none; position:absolute; background:black; border:1px solid #ccc; max-height:150px; overflow-y:auto; z-index:1000; color:white;';
+document.body.appendChild(searchOptionsDiv);
+
+function showSearchOptions() {
+    searchOptionsDiv.innerHTML = '';
+    commonSearchTerms.forEach(item => {
+        const option = document.createElement('div');
+        option.innerHTML = item.term + ' <span style="font-size: smaller; color: #888;">' + item.description + '</span>';
+        option.style.cssText = 'padding:5px; cursor:pointer; white-space: nowrap;';
+        option.onclick = () => {
+            searchInput.value = item.term;
+            searchInput.focus(); 
+            searchOptionsDiv.style.display = 'none';
+            searchInput.dispatchEvent(new Event('input')); 
+        };
+        searchOptionsDiv.appendChild(option);
+    });
+
+    const rect = searchInput.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const maxDropdownHeight = Math.min(600, windowHeight - rect.bottom - 10); // 300 is an example max height
+
+
+    searchOptionsDiv.style.left = `${rect.left}px`;
+    searchOptionsDiv.style.top = `${rect.bottom}px`;
+    searchOptionsDiv.style.maxHeight = `${maxDropdownHeight}px`;
+    searchOptionsDiv.style.display = 'block';
+
+    let maxWidth = 0;
+    Array.from(searchOptionsDiv.children).forEach(child => {
+        maxWidth = Math.max(maxWidth, child.offsetWidth);
+    });
+    searchOptionsDiv.style.width = Math.min(maxWidth + 20, window.innerWidth - 20) + 'px';
+
+    if (rect.bottom + searchOptionsDiv.offsetHeight > windowHeight) {
+        searchOptionsDiv.style.top = `${rect.top - searchOptionsDiv.offsetHeight}px`; // Position above if it would go off-screen
+    }
+}
+
+function hideSearchOptions() {
+    searchOptionsDiv.style.display = 'none';
+}
+
+searchInput.addEventListener('focus', showSearchOptions);
+searchInput.addEventListener('input', hideSearchOptions); // Hides dropdown on input change
+searchInput.addEventListener('blur', function() {
+    setTimeout(hideSearchOptions, 200); // Delay hiding options to allow for click processing
+});
+searchInput.addEventListener('click', showSearchOptions);
+searchOptionsDiv.addEventListener('click', (e) => e.stopPropagation());
+document.addEventListener('click', () => {
+    if (document.activeElement !== searchInput) {
+        hideSearchOptions();
+    }
+});
+
+//// End Search Term Drop Down ////
+
+
+
+
+
+
+//// Input Event Listener ////
+document.getElementById('codeInput').addEventListener('input', function(event) {
+    const currentSliderValue = parseInt(renderLimitSlider.value, 10);
+
+    if (lineCount <= 30000) {
+        parseGCode(this.value);      
+    }
+
+    renderLimitSlider.value = Math.min(currentSliderValue, renderLimitSlider.max);
+    renderLimitDisplay.value = renderLimitSlider.value;
+    sliceLimit = parseInt(renderLimitSlider.value, 10);
+    updateCurrentLine();
+    
+});
+
+
+
+
+
+//// Update Button if over 30k lines ////
+function showUpdateButton() {
+    document.getElementById('update-gcode-button').style.display = 'block';
+}
+
+function hideUpdateButton() {
+    document.getElementById('update-gcode-button').style.display = 'none';
+}
+document.getElementById('update-gcode-button').addEventListener('click', function() {
+    parseGCode(document.getElementById('codeInput').value);
+});
+
+
+
+
+
+
+
+//// Shift key selecting fix ////
+document.head.insertAdjacentHTML('beforeend', 
+  '<style>' +
+    '.no-select {' +
+    '  -webkit-user-select: none;' +
+    '  -moz-user-select: none;' +
+    '  -ms-user-select: none;' +
+    '  user-select: none;' +
+    '}' +
+  '</style>'
+);
+document.addEventListener('keydown', function(e) {
+  if (e.shiftKey) {
+    document.body.classList.add('no-select');
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (!e.shiftKey) {
+    document.body.classList.remove('no-select');
+  }
+});
+
+
+
+
+
+
+
+//// Keyboard keyboard on touch devices ////
+function hideKeyboard() {
+    var input = document.createElement('input');
+    input.setAttribute('type', 'text');
+    document.body.appendChild(input);
+    input.focus();
+    setTimeout(function() {
+        input.blur();
+        document.body.removeChild(input);
+    }, 100);
+}
+
+function isTextInputElement(element) {
+    return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA';
+}
+
+document.addEventListener('click', manageKeyboard);
+document.addEventListener('touchstart', manageKeyboard);
+
+function manageKeyboard(event) {
+    const target = event.target;
+
+    // If the user clicks/touches outside any text input, hide the keyboard
+    if (!isTextInputElement(target)) {
+        hideKeyboard();
+    } else {
+        if (event.type === 'touchstart') {
+            event.stopPropagation();
+        }
+    }
+}
+document.addEventListener('click', function(event) {
+    if (!isTextInputElement(event.target)) {
+        document.activeElement.blur();
+    }
+});
+document.addEventListener('touchstart', function(event) {
+    if (!isTextInputElement(event.target)) {
+        document.activeElement.blur();
+    }
+});
+
+
+
+
+
+
+
+
+//// Toggle thick lines ////
+document.getElementById('toggle-thick-lines').addEventListener('click', function() {
+    // Save the current slider position
+    const currentSliderValue = parseInt(renderLimitSlider.value, 10);
+    thickLines = !thickLines;
+    this.textContent = thickLines ? "│" : "║";
+    parseGCode(document.getElementById('codeInput').value);
+    renderLimitSlider.value = Math.min(currentSliderValue, renderLimitSlider.max); // Ensure it doesn't exceed the new max
+    renderLimitDisplay.value = renderLimitSlider.value;
+    sliceLimit = parseInt(renderLimitSlider.value, 10);
+    updateCurrentLine();
+});
+
+
+
+
+//// Toggle travel lines ////
+document.getElementById('toggle-travel-lines').addEventListener('click', () => {
+    showTravelLines = !showTravelLines;
+    updateCurrentLine(); // Re-evaluate visibility based on new setting
+});
+
+//// Render limit slider and display/input ////
+renderLimitSlider.addEventListener('input', function () {
+    sliceLimit = parseInt(this.value, 10);
+    renderLimitDisplay.value = sliceLimit;
+    updateCurrentLine();
+});
+renderLimitDisplay.addEventListener('input', function () {
+    let value = parseInt(this.value, 10);
+    value = Math.max(1, Math.min(renderLimitSlider.max, value));
+    sliceLimit = value;
+    renderLimitSlider.value = value;
+    updateCurrentLine();
+});
+
+
+// Handle scrolling of G-code input
+['wheel', 'scroll'].forEach(event => {
+    document.getElementById('codeInput').addEventListener(event, (e) => {
+        if (e.type === 'wheel') {
+            e.preventDefault();
+            const direction = e.deltaY > 0 ? 1 : -1;
+            const lineHeight = 14; // Assuming your line height is 14px
+            document.getElementById('codeInput').scrollTop = Math.max(0, Math.min(
+                document.getElementById('codeInput').scrollTop + (direction * lineHeight),
+                document.getElementById('codeInput').scrollHeight - document.getElementById('codeInput').clientHeight
+            ));
+        }
+        lineNumbersDiv.scrollTop = document.getElementById('codeInput').scrollTop; // Sync line numbers with textarea scroll
+        updateCurrentLine();
+        updateSliderAndLayerPositions();
+        logCurrentLine();
+    });
+});
+
+
+
+
+//// CREATE GEOMETRY FUNCTIONS ////
+function setupGeometry(start, end, isPrinting, isRapidMove, eValue) {
+    if (thickLines && isPrinting) {
+        return createSquishedCylinderGeometry(start, end, eValue);
+    } else {
+        return createLineGeometry(start, end, isPrinting, isRapidMove);
+    }
+}
+
+function createLineGeometry(start, end, isPrinting, isRapidMove) {
+    let geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+    let materialColor = isPrinting ? printingColor : (isRapidMove ? rapidMoveColor : travelColor);
+    let lineWidth = isPrinting ? 2 : 1; // Thinner for travel lines, adjust as needed
+
+    let material = new THREE.LineBasicMaterial({
+        color: materialColor,
+        linewidth: lineWidth,
+        transparent: true,
+        opacity: isPrinting ? PRINTING_OPACITY : NON_PRINTING_OPACITY
+    });
+
+    return new THREE.Line(geometry, material);
+}
+
+function createSquishedCylinderGeometry(start, end, eValue) {
+
+    width = 0.4;
+    height = 0.2;
+
+    width = Math.max(0.01, width);
+    height = Math.max(0.01, height);
+
+    const pathLength = start.distanceTo(end);
+    const boxGeometry = new THREE.BoxGeometry(width, height, pathLength);
+	
+    boxGeometry.computeVertexNormals();
+	
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x00CC00, // Green color
+        transparent: true,
+        opacity: 1,
+        shininess: 50,
+    });
+
+    // Create the mesh
+    const shape = new THREE.Mesh(boxGeometry, material);
+
+    // Calculate midpoint between start and end
+    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+    shape.position.copy(midPoint);
+
+    // Calculate direction vector
+    const direction = new THREE.Vector3().subVectors(end, start).normalize();
+
+    // Create a quaternion to align the geometry
+    const up = new THREE.Vector3(0, 1, 0); // Default "up" direction (Y-axis)
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
+    shape.setRotationFromQuaternion(quaternion);
+
+    // Rotate to ensure geometry is flat on the build plate
+    shape.rotateX(Math.PI / 2); // Align the flat surface to the XY plane
+
+    if (!scene.getObjectByName('directionalLight')) {
+        addLightingToScene();
+    }
+
+    return shape;
+}
+
+
+function addLightingToScene() {
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    directionalLight.name = 'directionalLight';
+    scene.add(directionalLight);
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+}
+
+
+
+
+
+/////////Play Button////////////
+let isPlaying = false;
+let stepsPerSecond = 1; // Default to 1 step per second for 1x speed
+let speedMultipliers = {
+    '16x': 420,
+    '8x': 60,
+    '4x': 20,
+    '2x': 10,
+    '1x': 1,
+    '-1x': -1,
+    '-2x': -10,
+    '-4x': -20,
+    '-8x': -60,
+    '-16x': -420
+};
+
+let currentSpeed = '4x';
+
+function playGCode() {
+    if (!isPlaying) {
+        isPlaying = true;
+        document.getElementById('play-button').textContent = '⏸️'; // Pause icon
+        let lineHeight = 14;
+        let stepInterval = 1000 / Math.abs(speedMultipliers[currentSpeed]); // Use absolute value for interval calculation
+        const direction = speedMultipliers[currentSpeed] < 0 ? -1 : 1; // Determine scroll direction
+        
+        playbackInterval = setInterval(() => {
+            const currentLine = Math.floor(textarea.scrollTop / lineHeight);
+            const lines = textarea.value.split('\n');
+            
+            if (currentLine + direction >= 0 && currentLine + direction < lines.length) {
+                textarea.scrollTop += direction * lineHeight;
+                lineNumbersDiv.scrollTop = textarea.scrollTop;
+                updateSliderAndLayerPositions();
+                logCurrentLine();
+                updateCurrentLine(); // Update the 3D view
+            } else {
+                stopPlayback();
+            }
+        }, stepInterval);
+    } else {
+        stopPlayback();
+    }
+}
+
+function stopPlayback() {
+    clearInterval(playbackInterval);
+    isPlaying = false;
+    document.getElementById('play-button').textContent = '▶️'; // Play icon
+}
+
+function adjustSpeed(change) {
+    let speeds = Object.keys(speedMultipliers);
+    let currentIndex = speeds.indexOf(currentSpeed);
+    currentIndex = (currentIndex - change + speeds.length) % speeds.length; // Changed to -change for reversing button functionality
+    currentSpeed = speeds[currentIndex];
+    document.getElementById('speed-display').textContent = currentSpeed;
+    
+    if (isPlaying) {
+        stopPlayback();
+        playGCode(); // Restart with new speed
+    }
+}
+
+document.getElementById('play-button').addEventListener('click', playGCode);
+document.getElementById('fast-forward').addEventListener('click', () => adjustSpeed(1)); // Fast forward increases speed
+document.getElementById('slow-down').addEventListener('click', () => adjustSpeed(-1)); // Slow down decreases speed
+
+// Initial setup
+document.getElementById('speed-display').textContent = currentSpeed;
+
+// Space bar toggle functionality, but only if textarea is not focused
+document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && document.activeElement !== textarea) {
+        e.preventDefault(); // Prevent default space bar action like scrolling
+        playGCode(); // This will toggle between play and pause due to how `playGCode` is set up
+    }
+});
+//////////End Play Button/////////
+
+
+
+
+
+////Clear screen////
+document.getElementById('clear-display').addEventListener('click', function() {
+    document.getElementById('codeInput').value = '';
+    document.getElementById('line-numbers').innerHTML = '';
+    document.getElementById('current-line-display').textContent = '';
+    document.getElementById('gcode-command-name').textContent = '';
+    document.getElementById('gcode-command-description').textContent = '';
+    textarea.scrollTop = 0;
+    document.getElementById('slider').style.top = '0px';
+    document.getElementById('layer-slider').style.top = '0px';
+    document.getElementById('current-z-height').textContent = 'Z: 0.00';
+    currentZHeight = 0; 
+    currentStepIndex = 0; 
+    document.getElementById('render-limit').value = 200;
+    document.getElementById('render-limit-display').value = 200;
+    sliceLimit = 200;
+
+    allLineSegments.forEach(segment => {
+        if (segment.line) {
+            scene.remove(segment.line);
+            if (segment.line.parent === cube) cube.remove(segment.line);
+            if (segment.line.geometry) segment.line.geometry.dispose();
+            if (segment.line.material) segment.line.material.dispose();
+        }
+    });
+    allLineSegments = [];
+
+    if (isPlaying) {
+        stopPlayback();
+    }
+
+    renderer.render(scene, camera);
+    sceneChanged = false;
+});
+
+
+
+
+
+document.getElementById('load-file-button').addEventListener('click', function() {
+    let input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.gcode,.gco,.g'; 
+    
+    input.click();
+
+    input.addEventListener('change', function(event) {
+        let file = event.target.files[0];
+        if (file) {
+            showLoadingScreen();
+            handleFile(file);
+        }
+    });
+});
+
+
+
+
+//// Drag and drop ////
+document.addEventListener('dragover', function(e) {
+    e.preventDefault();
+});
+
+document.addEventListener('drop', function(e) {
+    e.preventDefault();
+    
+    showLoadingScreen();
+
+    if (e.dataTransfer.items) {
+        for (let i = 0; i < e.dataTransfer.items.length; i++) {
+            if (e.dataTransfer.items[i].kind === 'file') {
+                let file = e.dataTransfer.items[i].getAsFile();
+                if (file.type === 'text/plain' || 
+                    file.name.endsWith('.gcode') || 
+                    file.name.endsWith('.gco') || 
+                    file.name.endsWith('.g')) {
+                    handleFile(file);
+                    break;
+                }
+            }
+        }
+    } else {
+        for (let i = 0; i < e.dataTransfer.files.length; i++) {
+            let file = e.dataTransfer.files[i];
+            if (file.type === 'text/plain' || 
+                file.name.endsWith('.gcode') || 
+                file.name.endsWith('.gco') || 
+                file.name.endsWith('.g')) {
+                handleFile(file);
+                break;
+            }
+        }
+    }
+});
+
+
+function handleFile(file) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        const clipboardData = e.target.result;
+		
+        thickLines = false; // Set this before parsing G-code
+        document.getElementById('toggle-thick-lines').textContent = "║";   
+		
+        // Instead of directly setting the value, we'll mimic the paste behavior
+        textarea.value = clipboardData;
+        
+        // Update line numbers
+        const codeLines = textarea.value.split('\n');
+        lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
+        
+        // Reset selections and scroll positions
+        textarea.selectionStart = textarea.selectionEnd = 0;
+        textarea.scrollTop = 0;
+        lineNumbersDiv.scrollTop = 0;
+        
+        // Update G-code visualization and UI elements
+        parseGCode(textarea.value, showTravelLines);
+
+        hideLoadingScreen();
+        
+        updatePaddingAndEnsure(0);
+
+        updateSliderAndLayerPositions();
+
+        logCurrentLine();
+    };
+    reader.readAsText(file);
+}
+
+
+
+function autoLoadExampleGcode() {
+    const gcodeFiles = ['gt.gcode', 'bitcoin.gcode'];
+	
+    // Randomly select one of the files
+    const randomIndex = Math.floor(Math.random() * gcodeFiles.length);
+    const chosenFile = gcodeFiles[randomIndex];
+
+    fetch(chosenFile)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Network response was not ok for ${chosenFile}`);
+        }
+        return response.text();
+    })
+    .then(gcode => {
+        document.getElementById('codeInput').value = gcode;
+        const codeLines = gcode.split('\n');
+        document.getElementById('line-numbers').innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
+        parseGCode(gcode);    
+        updatePaddingAndEnsure(0);
+        updateSliderAndLayerPositions();
+        logCurrentLine();
+    })
+    .catch(error => {
+        console.error(`Failed to load the example G-code file (${chosenFile}):`, error);
+        alert(`Failed to load example G-code (${chosenFile}). Please check the file or network connection.`);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    autoLoadExampleGcode();
+});
+
+
+
+
+
+
+document.getElementById('save-gcode-button').addEventListener('click', function() {
+    const textToSave = document.getElementById('codeInput').value;
+    const filename = 'gcode_export.gcode';
+    const blob = new Blob([textToSave], {type: "text/plain;charset=utf-8"});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link); 
+
+    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+});
+
+
+
+
+
+function adjustSceneForNewDimensions(newBuildPlateY, newBuildPlateX) {
+    ({ scene, camera, renderer, cube, setupEventListeners, renderIfNeeded, updateTransformations, DEFAULT_POSITION, nozzle } = setup3js(newBuildPlateX, newBuildPlateY));
+
+    buildPlateX = newBuildPlateX;
+    buildPlateY = newBuildPlateY;
+	
+    // Remove old canvas and append new renderer DOM element
+    const canvasContainer = document.getElementById('canvasContainer');
+    if (canvasContainer.firstChild) {
+        canvasContainer.removeChild(canvasContainer.firstChild);
+    }
+    canvasContainer.appendChild(renderer.domElement);
+
+    // Reset event listeners
+    setupEventListeners(renderer.domElement);
+
+    // Clear existing line segments and reset variables
+    allLineSegments.forEach(segment => {
+        if (segment.line) {
+            scene.remove(segment.line);
+            if (segment.line.geometry) segment.line.geometry.dispose();
+            if (segment.line.material) segment.line.material.dispose();
+        }
+    });
+    allLineSegments = [];
+    currentStepIndex = 0;
+    currentZHeight = 0;
+    sceneChanged = false;
+    // Add nozzle to the new cube
+    cube.add(nozzle); 
+
+    if (document.getElementById('codeInput').value) {
+        parseGCode(document.getElementById('codeInput').value, showTravelLines);
+    }
+
+    scene.add(cube);
+    renderIfNeeded();
+}
+
+['buildPlateX', 'buildPlateY'].forEach(id => {
+    document.getElementById(id).addEventListener('keyup', debounceForBuildplate(function() {
+        const newBuildPlateX = parseFloat(document.getElementById('buildPlateX').value) || 256;
+        const newBuildPlateY = parseFloat(document.getElementById('buildPlateY').value) || 256;
+        adjustSceneForNewDimensions(newBuildPlateX, newBuildPlateY);
+    }, 500));
+});
+
+function debounceForBuildplate(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+
+
+
+
+
+
+
+
+renderIfNeeded();
+</script>
+    
+    
+
+<!--////////////////BEGIN CODE PANE////////////////////////////////////////////-->
+<script>
+let END_PADDING = '';
+let initialSetupDone = false;
+
+function updatePaddingAndEnsure(cursorPos) {
+    const lines = textarea.value.split('\n');
+    const visibleLines = Math.floor(textarea.clientHeight / 14.5);
+    
+    END_PADDING = '\n'.repeat(Math.max(visibleLines + 1));
+    
+    // Find last non-empty line
+    let lastNonEmptyLineIndex = lines.length - 1;
+    while (lastNonEmptyLineIndex >= 0 && lines[lastNonEmptyLineIndex].trim() === '') {
+        lastNonEmptyLineIndex--;
+    }
+    
+    textarea.value = lines.slice(0, lastNonEmptyLineIndex + 1).join('\n') + END_PADDING;
+    textarea.setSelectionRange(cursorPos, cursorPos);
+}
+
+const pane = document.getElementById('draggable-pane');
+const handle = document.getElementById('resize-handle');
+let isDragging = false;
+let startX = 0;
+let startWidth = 0;
+
+handle.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    startWidth = parseInt(getComputedStyle(pane).width, 10);
+    e.preventDefault();
+});
+
+let touchStartX = 0;
+let touchStartWidth = 0;
+let isTouchDragging = false;
+
+handle.addEventListener('mousedown', handleMouseOrTouchStart);
+handle.addEventListener('touchstart', handleMouseOrTouchStart, { passive: false });
+
+function handleMouseOrTouchStart(e) {
+    if (e.type === 'touchstart') {
+        e.preventDefault();
+        touchStartX = e.touches[0].clientX;
+        touchStartWidth = parseInt(getComputedStyle(pane).width, 10);
+        isTouchDragging = true;
+    } else {
+        isDragging = true;
+        startX = e.clientX;
+        startWidth = parseInt(getComputedStyle(pane).width, 10);
+    }
+}
+
+document.addEventListener('mousemove', handleMouseOrTouchMove);
+document.addEventListener('touchmove', handleMouseOrTouchMove, { passive: false });
+
+function handleMouseOrTouchMove(e) {
+    if (isDragging || isTouchDragging) {
+        e.preventDefault();
+        const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const newWidth = Math.max(50, (isTouchDragging ? touchStartWidth : startWidth) - (currentX - (isTouchDragging ? touchStartX : startX)));
+        
+        pane.style.width = `${newWidth}px`;
+        pane.style.setProperty('--pane-width', `${newWidth}px`);
+        document.getElementById('ui-buttons').style.right = `calc(${newWidth}px + 10px)`;
+    }
+}
+
+document.addEventListener('mouseup', handleMouseOrTouchEnd);
+document.addEventListener('touchend', handleMouseOrTouchEnd);
+
+function handleMouseOrTouchEnd(e) {
+    isDragging = false;
+    isTouchDragging = false;
+}
+
+document.addEventListener('mouseup', () => isDragging = false);
+
+const lineNumbersDiv = document.getElementById("line-numbers");
+const slider = document.getElementById('slider');
+const sliderContainer = document.getElementById('slider-container');
+const layerSlider = document.getElementById('layer-slider');
+const layerSliderContainer = document.getElementById('layer-slider-container');
+
+
+
+
+function handleArrowKeys(e) {
+    const isTextareaFocused = document.activeElement === textarea;
+
+    if (isTextareaFocused) {
+        // Allow default behavior for editing when textarea is focused
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            // Prevent scrolling if we're at the top or bottom of the textarea
+            const cursorPosition = textarea.selectionStart;
+            const lines = textarea.value.split('\n');
+            const currentLineNumber = textarea.value.substr(0, cursorPosition).split('\n').length - 1;
+            const totalLines = lines.length;
+
+            const isAtFirstLine = currentLineNumber === 0;
+            const isAtLastLine = currentLineNumber === totalLines - 1;
+
+            if (e.shiftKey) {
+                // If Shift is pressed, move by search term up or down
+                e.preventDefault();
+                navigateLayer(e.key === 'ArrowUp' ? 'up' : 'down');
+            } else if ((e.key === 'ArrowUp' && isAtFirstLine) || 
+                       (e.key === 'ArrowDown' && isAtLastLine)) {
+                e.preventDefault();
+                scrollTextarea(e.key === 'ArrowUp' ? -1 : 1);
+            } else {
+                // Do nothing, let the default action happen (cursor movement)
+            }
+        }
+    } else {
+        // If not focused on textarea, use scrolling
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                navigateLayer(e.key === 'ArrowUp' ? 'up' : 'down');
+            } else {
+                scrollTextarea(e.key === 'ArrowUp' ? -1 : 1);
+            }
+        }
+    }
+}
+
+document.addEventListener('keydown', handleArrowKeys);
+
+searchInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); 
+        if (event.shiftKey) {
+            layerUpButton.click();
+        } else {
+            layerDownButton.click();
+        }
+    }
+});
+
+
+document.getElementById('codeInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();  
+        const lineHeight = 14; 
+        this.scrollTop += lineHeight;
+        return false; 
+    }
+});
+
+
+
+function scrollTextarea(direction) {
+    const lineHeight = 14;
+    textarea.scrollTop += direction * lineHeight;
+    textarea.scrollTop = Math.max(0, Math.min(textarea.scrollHeight - textarea.clientHeight, textarea.scrollTop));
+    
+    lineNumbersDiv.scrollTop = textarea.scrollTop;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+}
+
+
+
+document.getElementById('codeInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        
+        // Insert a newline at the cursor position
+        this.value = this.value.substring(0, start) + '\n' + this.value.substring(end);
+        
+        // Set the new cursor position
+        this.selectionStart = this.selectionEnd = start + 1;
+        
+        // Update line numbers and current line display, but don't change scroll position
+        updatePaddingAndEnsure(start + 1);
+        const codeLines = this.value.split('\n');
+        lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
+        logCurrentLine();
+        
+        return false;
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); 
+        
+        const lineHeight = 14;
+        const direction = e.key === 'ArrowDown' ? 1 : -1;
+        
+        this.scrollTop = Math.max(0, Math.min(this.scrollTop + direction * lineHeight, this.scrollHeight - this.clientHeight));
+
+        const lines = this.value.split('\n');
+        const cursorPosition = this.selectionStart;
+        const currentLineIndex = this.value.substr(0, cursorPosition).split('\n').length - 1;
+        let newLineIndex = currentLineIndex + direction;
+        
+        if (newLineIndex >= 0 && newLineIndex < lines.length) {
+            let newLineStart = 0;
+            for (let i = 0; i < newLineIndex; i++) {
+                newLineStart += lines[i].length + 1;
+            }
+            this.selectionStart = this.selectionEnd = newLineStart;
+        }
+        
+        lineNumbersDiv.scrollTop = this.scrollTop;
+        updateSliderAndLayerPositions();
+        logCurrentLine();
+    }
+});
+
+
+
+
+
+
+textarea.addEventListener('input', function() {
+    const cursorPos = this.selectionStart;
+    if (!initialSetupDone) {
+        updatePaddingAndEnsure(cursorPos);
+        initialSetupDone = true;
+    } else {
+        updatePaddingAndEnsure(cursorPos);
+    }
+
+    const codeLines = this.value.split('\n');
+    lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
+
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+});
+
+
+lineNumbersDiv.addEventListener('wheel', e => {
+    e.preventDefault();
+    textarea.dispatchEvent(new WheelEvent('wheel', e));
+});
+
+//// touch event listeners to prevent scrolling ////
+lineNumbersDiv.addEventListener('touchstart', preventTouchScroll, { passive: false });
+lineNumbersDiv.addEventListener('touchmove', preventTouchScroll, { passive: false });
+
+function preventTouchScroll(e) {
+    e.preventDefault(); 
+    e.stopPropagation(); 
+}
+
+
+
+
+//// Pen Click Support ////
+document.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "pen") {
+        //console.log("S Pen interaction detected");
+        // Treat it as a mouse click
+        handlePenAsMouseClick(event);
+    }
+});
+
+function handlePenAsMouseClick(event) {
+    const simulatedClick = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        clientX: event.clientX,
+        clientY: event.clientY,
+    });
+    event.target.dispatchEvent(simulatedClick);
+}
+
+
+
+
+function updateSliderAndLayerPositions() {
+    const scrollableHeight = Math.max(textarea.scrollHeight - textarea.clientHeight, 42);
+    const scrollRatio = textarea.scrollTop / scrollableHeight;
+
+    slider.style.top = `${(sliderContainer.clientHeight - slider.offsetHeight) * scrollRatio}px`;
+
+    const lines = textarea.value.split('\n');
+    let layers = lines.reduce((acc, line, i) => {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
+        return acc;
+    }, []);
+
+    if (layers.length) {
+        let currentLayer = layers.find(i => i * 14 > textarea.scrollTop) || layers[layers.length - 1];
+        layerSlider.style.top = `${(currentLayer / (lines.length - 1)) * (layerSliderContainer.clientHeight - layerSlider.offsetHeight)}px`;
+    }
+}
+
+
+
+function logCurrentLine() {
+    const lineHeight = 14;
+    const currentLine = Math.floor(textarea.scrollTop / lineHeight);
+    
+    let lineStart = 0;
+    for (let i = 0; i < currentLine; i++) {
+        lineStart = textarea.value.indexOf('\n', lineStart) + 1;
+        if (lineStart === 0) break;
+    }
+
+    let lineEnd = textarea.value.indexOf('\n', lineStart);
+    if (lineEnd === -1) lineEnd = textarea.value.length; 
+    const currentLineText = textarea.value.slice(lineStart, lineEnd);
+    document.getElementById('current-line-display').innerHTML = '<span style="font-size:18px">' + currentLineText + '</span>';
+    
+    const matchingCommand = gcodeCommands.find(cmd => {
+        return currentLineText.trim().toUpperCase().startsWith(cmd.command);
+    });
+
+    if (matchingCommand) {
+        document.getElementById('gcode-command-name').innerHTML = '<hr><u><strong>' + `${matchingCommand.name}` + '</strong></u>';
+        document.getElementById('gcode-command-description').innerHTML = `${matchingCommand.description}`;
+    } else {
+        document.getElementById('gcode-command-name').innerHTML = '';
+        document.getElementById('gcode-command-description').innerHTML = '';
+    }
+}
+
+
+
+
+
+function startSliderMove(e) {
+	e.stopPropagation();
+    e.preventDefault();
+    let startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+    let initialScrollTop = textarea.scrollTop;
+
+    const moveSlider = (event) => {
+        event.preventDefault();
+        const currentY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
+        const deltaY = currentY - startY;
+        const scrollableHeight = Math.max(textarea.scrollHeight - textarea.clientHeight, 42);
+        let newScrollTop = initialScrollTop + (deltaY * scrollableHeight / (sliderContainer.clientHeight - slider.offsetHeight));
+        newScrollTop = Math.round(newScrollTop / 14) * 14; // Snap to lines
+        newScrollTop = Math.max(0, Math.min(newScrollTop, scrollableHeight));
+
+        textarea.scrollTop = newScrollTop;
+        lineNumbersDiv.scrollTop = newScrollTop;
+        updateSliderAndLayerPositions();
+        logCurrentLine();
+    };
+
+    const stopMoveSlider = () => {
+        document.removeEventListener('mousemove', moveSlider);
+        document.removeEventListener('touchmove', moveSlider, { passive: false });
+        document.removeEventListener('mouseup', stopMoveSlider);
+        document.removeEventListener('touchend', stopMoveSlider, { passive: false });
+    };
+
+    document.addEventListener('mousemove', moveSlider);
+    document.addEventListener('touchmove', moveSlider, { passive: false });
+    document.addEventListener('mouseup', stopMoveSlider);
+    document.addEventListener('touchend', stopMoveSlider, { passive: false });
+}
+
+slider.addEventListener('mousedown', startSliderMove);
+slider.addEventListener('touchstart', startSliderMove, { passive: false });
+
+
+
+
+
+
+function startLayerSliderMove(e) {
+    e.preventDefault();
+    let startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+    let startSliderTop = parseInt(getComputedStyle(layerSlider).top, 10);
+
+    const moveLayerSlider = (event) => {
+        event.preventDefault();
+        const currentY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
+        const deltaY = currentY - startY;
+        let newTop = startSliderTop + deltaY;
+        const containerHeight = layerSliderContainer.clientHeight - layerSlider.offsetHeight;
+        newTop = Math.max(0, Math.min(newTop, containerHeight));
+
+        layerSlider.style.top = `${newTop}px`;
+        scrollToLayerByPosition(newTop);
+    };
+
+    const stopMoveLayerSlider = () => {
+        document.removeEventListener('mousemove', moveLayerSlider);
+        document.removeEventListener('touchmove', moveLayerSlider, { passive: false });
+        document.removeEventListener('mouseup', stopMoveLayerSlider);
+        document.removeEventListener('touchend', stopMoveLayerSlider, { passive: false });
+    };
+
+    document.addEventListener('mousemove', moveLayerSlider);
+    document.addEventListener('touchmove', moveLayerSlider, { passive: false });
+    document.addEventListener('mouseup', stopMoveLayerSlider);
+    document.addEventListener('touchend', stopMoveLayerSlider, { passive: false });
+}
+
+layerSlider.addEventListener('mousedown', startLayerSliderMove);
+layerSlider.addEventListener('touchstart', startLayerSliderMove, { passive: false });
+
+
+
+
+function scrollToLayerByPosition(position) {
+    const lines = textarea.value.split('\n');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    let layers = lines.reduce((acc, line, i) => {
+        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
+        return acc;
+    }, []);
+
+    if (layers.length === 0) return;
+
+    const sliderHeight = layerSliderContainer.clientHeight - layerSlider.offsetHeight;
+    let layerIndex = Math.floor((position / sliderHeight) * layers.length);
+    layerIndex = Math.max(0, Math.min(layerIndex, layers.length - 1));
+
+    textarea.scrollTop = layers[layerIndex] * 14;
+    lineNumbersDiv.scrollTop = textarea.scrollTop;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+}
+const layerUpButton = document.getElementById('layer-up');
+const layerDownButton = document.getElementById('layer-down');
+
+layerUpButton.addEventListener('click', () => navigateLayer('up'));
+layerDownButton.addEventListener('click', () => navigateLayer('down'));
+
+function navigateLayer(direction) {
+    const lines = textarea.value.split('\n');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    let layers = lines.reduce((acc, line, i) => {
+        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
+        return acc;
+    }, []);
+
+    if (layers.length === 0) return;
+
+    let currentLayerIndex = layers.findIndex(layer => layer * 14 >= textarea.scrollTop);
+    if (direction === 'up') {
+        currentLayerIndex = Math.max(0, currentLayerIndex - 1);
+    } else { // down
+        currentLayerIndex = Math.min(currentLayerIndex + 1, layers.length - 1);
+        if (currentLayerIndex === -1) currentLayerIndex = layers.length - 1;
+    }
+
+    textarea.scrollTop = layers[currentLayerIndex] * 14;
+    lineNumbersDiv.scrollTop = textarea.scrollTop;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+}
+
+
+
+
+window.addEventListener('resize', () => {
+    updatePaddingAndEnsure(textarea.selectionStart);
+});
+
+
+document.getElementById('go-to-top').addEventListener('click', () => {
+    textarea.scrollTop = 0;
+    lineNumbersDiv.scrollTop = 0;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+});
+
+document.getElementById('go-to-bottom').addEventListener('click', () => {
+    textarea.scrollTop = textarea.scrollHeight;
+    lineNumbersDiv.scrollTop = textarea.scrollHeight;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+});
+
+document.getElementById('line-up').addEventListener('click', () => {
+    const lineHeight = 14;
+    textarea.scrollTop = Math.max(0, textarea.scrollTop - lineHeight);
+    lineNumbersDiv.scrollTop = textarea.scrollTop;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+});
+
+document.getElementById('line-down').addEventListener('click', () => {
+    const lineHeight = 14;
+    textarea.scrollTop = Math.min(textarea.scrollHeight - textarea.clientHeight, textarea.scrollTop + lineHeight);
+    lineNumbersDiv.scrollTop = textarea.scrollTop;
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+});
+
+
+textarea.addEventListener('blur', function() {
+    this.selectionStart = 0;
+    this.selectionEnd = 0;
+
+    const currentScrollTop = this.scrollTop;
+
+    setTimeout(() => {
+        this.selectionStart = 0;
+        this.selectionEnd = 0;
+        this.scrollTop = currentScrollTop;
+        lineNumbersDiv.scrollTop = currentScrollTop;
+        updateSliderAndLayerPositions();
+        logCurrentLine();
+    }, 0);
+});
+
+
+textarea.addEventListener('paste', function(e) {
+    const currentScrollTop = this.scrollTop;
+    e.preventDefault();
+
+    thickLines = false;
+    document.getElementById('toggle-thick-lines').textContent = "║";    
+
+    const start = this.selectionStart;
+    const clipboardData = e.clipboardData.getData('text');
+    
+    this.value = this.value.substring(0, start) + 
+                 clipboardData + 
+                 this.value.substring(this.selectionEnd);
+    
+    const codeLines = this.value.split('\n');
+    lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
+    
+    this.selectionStart = this.selectionEnd = 0;
+    
+    parseGCode(this.value, showTravelLines);
+    updatePaddingAndEnsure(0);
+    updateSliderAndLayerPositions();
+    logCurrentLine();
+
+    this.scrollTop = currentScrollTop;
+    lineNumbersDiv.scrollTop = currentScrollTop;
+});
+
+
+
+
+function showLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.style.display = 'flex'; 
+    }
+}
+
+function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+    }
+}
+
+window.addEventListener('load', function() {
+    document.getElementById('full-body').style.visibility = 'visible';
+});
+
+
+
+
+//// Info Screen ////
+document.addEventListener('DOMContentLoaded', (event) => {
+    const infoButton = document.getElementById('info-button');
+    const modal = document.getElementById('info-modal');
+    
+    if (infoButton && modal) {
+        infoButton.addEventListener('click', function() {
+            if (modal.style.display === "none" || modal.style.display === "") {
+                modal.style.display = "block";
+            } else {
+                modal.style.display = "none";
+            }
+        });
+
+
+        document.addEventListener('click', function(event) {
+            if (event.target !== modal && !modal.contains(event.target) && event.target !== infoButton) {
+                modal.style.display = "none";
+            }
+        });
+
+
+        const modalCloseButton = document.getElementById('modal-close');
+        if (modalCloseButton) {
+            modalCloseButton.addEventListener('click', function() {
+                modal.style.display = "none";
+            });
+        }
+    }
+});
+
+
+
+// Initial setup
+updatePaddingAndEnsure(0);
+updateSliderAndLayerPositions();
+logCurrentLine();
+document.getElementById('current-line-display').innerHTML = '<span style="font-size:18px;"><u>Gcoder V1</u><br><br> A gcode visualizer and editor for 3d printing. <br> <br> Input Gcode to begin.  </span>';
+
+
+const initialPaneWidth = parseInt(getComputedStyle(pane).width, 10);
+document.getElementById('ui-buttons').style.right = `calc(${initialPaneWidth}px + 10px)`;
+document.getElementById('ui-buttons').style.right = `calc(${initialPaneWidth}px + 10px)`;
+</script>
+</body>
+</html>
