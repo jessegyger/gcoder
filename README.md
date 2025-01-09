@@ -1,6 +1,6 @@
 # Gcode Viewer and Editor
 
-A web-based tool for visualizing and editing G-code for 3D printing, built with Three.js. Enjoy the convenience of using it offline by downloading the files and running them directly on your desktop.
+A web-based tool for visualizing and editing G-code for 3D printing, built with Three.js. Enjoy the convenience and security of using it offline by downloading the files and running them locally on your desktop.
 
 ## Overview
 
