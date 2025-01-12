@@ -1695,7 +1695,8 @@ function logCurrentLine() {
     document.getElementById('current-line-display').innerHTML = '<span style="font-size:18px">' + currentLineText + '</span>';
     
     const matchingCommand = gcodeCommands.find(cmd => {
-        return currentLineText.trim().toUpperCase().startsWith(cmd.command);
+        const commandPattern = new RegExp(`^${cmd.command}\\b`, 'i');
+        return commandPattern.test(currentLineText.trim());
     });
 
     if (matchingCommand) {
@@ -1706,6 +1707,7 @@ function logCurrentLine() {
         document.getElementById('gcode-command-description').innerHTML = '';
     }
 }
+
 
 
 
