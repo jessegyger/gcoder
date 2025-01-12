@@ -368,12 +368,16 @@ function parseLine(line, lineNumber, position) {
 
     if (cmd === '') return;
 
-    if (cmd.startsWith('G90')) {
-        isRelativePositioning = false;
-        return;
-    } else if (cmd.startsWith('G91')) {
-        isRelativePositioning = true;
-        return;
+    // Check if it's a movement command with a space after
+    if (!/^G(0|1|2|3) /.test(cmd)) {
+        if (cmd.startsWith('G90')) {
+            isRelativePositioning = false;
+            return;
+        } else if (cmd.startsWith('G91')) {
+            isRelativePositioning = true;
+            return;
+        }
+        return; // Ignore all other commands
     }
 
     let eValue = 0;
