@@ -1591,7 +1591,15 @@ document.getElementById('codeInput').addEventListener('keydown', function(e) {
 
 
 
-
+//// Auto Focus Code Area On Page Load ////
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('codeInput');
+    if (textarea) {
+        setTimeout(function() {
+            textarea.focus();
+        }, 100);
+    }
+});
 
 
 textarea.addEventListener('input', function() {
