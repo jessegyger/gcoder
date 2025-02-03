@@ -33,7 +33,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 ### Usage
 
 - **Input G-code:** 
-  - Allows you to directly type, paste, load, or drag and drop G-code into the editor.
+  - Allows you to directly type, paste, or load G-code into the editor.
 
 - **Visualize:** 
   - The 3D visualization updates in real-time as you scroll through the G-code in the editor.
