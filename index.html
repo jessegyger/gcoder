@@ -4,87 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>gcoder</title>
-    <!--<link rel="icon" type="image/x-icon" href="gcoder.ico">-->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./codemirror.min.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <div id="full-body">
-        <div style="display:none;" id="loading-screen">
-            <div class="loader"></div>
-        </div>
-
-        <div id="canvasContainer"></div>
-        <div id="bottom-overlay"></div>     
-        <div id="measurement-display"></div>
-        
-        <div id="data-pane">
-            <div width="300px" id="current-line-display"></div>
-            <div width="300px" id="gcode-command-name"></div>
-            <div width="300px" id="gcode-command-description"></div>                  
-        </div>
-
-        <div id="draggable-pane">   
-            <div id="slider-container">
-                <div id="slider"></div>
+    <div id="canvasContainer"></div>
+    <div id="container">
+        <div id="editor-container">
+            <div id="resize-handle"></div>
+            <textarea id="code" style="display:none;"></textarea>
+            <div id="custom-scrollbar">
+                <div id="scroll-thumb"></div>
             </div>
-            <div id="line-numbers"></div>
-            <textarea id="codeInput" placeholder="Enter Gcode" autofocus></textarea>                
-            <div id="layer-slider-container">
-                <div id="layer-slider"></div>
+            <div id="info-panel">
+                <div class="info-section">
+                    <div class="current-line"></div>
+                </div>
+                <div class="info-section">
+                    <div class="command-info"></div>
+                </div>
+                <div class="info-section">
+                    <div class="state-info">
+                        <div class="label">Z Height:</div>
+                        <div class="value" id="z-height">0.00</div>
+                        <div class="label">Position Mode:</div>
+                        <div class="value" id="pos-mode">Absolute</div>
+                        <div class="label">E Total:</div>
+                        <div class="value" id="e-total">0.00</div>
+                        <div class="label">Feed Rate:</div>
+                        <div class="value" id="feed-rate">0</div>
+                    </div>
+                </div>
+            </div>                 
+            <div id="button-panel">
+                <div id="horizontal-controls">
+                    <div id="speed-slider-container">
+                        <input type="range" id="speed-slider" 
+                               min="0" max="7" value="6" 
+                               style="writing-mode: vertical-lr; height:125px; float:left;"
+                               title="Adjust scrolling speed">
+                        <span id="fast-speed-display" class="">20x</span>
+                    </div>  
+                    <button class="layer-button" id="nextResult" title="Next search result">↓</button>
+                    <input type="text" id="searchInput" placeholder="Search..." title="Search for specific G-code commands or layers">
+                    <button class="layer-button" id="prevResult" title="Previous search result">↑</button>
+                    <div id="build-plate-size">
+                        <label for="buildPlateX" title="Set the width of the build plate">X:</label>
+                        <input type="number" id="buildPlateX" value="256" min="1" title="Enter the X dimension of the build plate in mm">
+                        <label for="buildPlateY" title="Set the depth of the build plate">Y:</label>
+                        <input type="number" id="buildPlateY" value="256" min="1" title="Enter the Y dimension of the build plate in mm">
+                    </div>  
+                </div>
+                <button class="layer-button" id="fast-play-button">▶️</button>
+                <button class="layer-button" id="scroll-up">⏫</button>
+                <button class="layer-button" id="scroll-down">⏬</button>
+                <button id="load-file-button" class="layer-button" title="Load G-code from a file">📂</button>
+                <button id="save-gcode-button" class="layer-button" title="Save current G-code to file">💾</button>
+                <button id="home-button" class="layer-button" title="Return to home position">🏠</button>
+                <button id="clear-display" class="layer-button" title="Clear the current G-code and reset view">🗑️</button>
+                <button id="toggle-travel-lines" class="layer-button" title="Toggle visibility of travel moves">🔹</button>
+                <button id="toggle-3d" class="layer-button" title="Toggle 3D/Line Rendering">🔳</button>
+                <button id="measure-button" class="layer-button" title="Toggle Measure Mode">📏</button>
+                <div id="render-limit-container">
+                    <input type="range" id="render-limit" style="writing-mode: vertical-lr; direction: rtl" title="Adjust how many lines of G-code to render at one time">
+                    <input type="number" id="render-limit-display" value="1" min="1" title="Set the number of G-code lines to display at one time">
+                    <br><br><button id="info-button" class="layer-button">ℹ️</button>
+                </div>
+    
             </div>
-            <div id="resize-handle"></div>      
-        </div>
-        
-        <div id="ui-buttons">
-            <div id="z-container">
-                <button id="info-button" class="layer-button">ℹ️</button>
-                <button id="play-button" class="layer-button" title="Play or pause simulation of G-code execution">▶️</button>
-                <button id="slow-down" class="layer-button" title="Decrease simulation speed">⏪</button>
-                <button id="speed-display" class="layer-button" disabled title="Current simulation speed">1x</button>
-                <button id="fast-forward" class="layer-button" title="Increase simulation speed">⏩</button>
-                
-                <div id="build-plate-size">
-                    <label for="buildPlateX" title="Set the width of the build plate">X:</label>
-                    <input type="number" id="buildPlateX" value="256" min="1" title="Enter the X dimension of the build plate in mm">
-                    <label for="buildPlateY" title="Set the depth of the build plate">Y:</label>
-                    <input type="number" id="buildPlateY" value="256" min="1" title="Enter the Y dimension of the build plate in mm">
-                </div>	
-                
-                <button id="layer-up" class="layer-button" title="Move to the previous layer">🔼</button>
-                <input type="text" id="searchInput" placeholder="Search..." title="Search for specific G-code commands or layers">
-                <button id="layer-down" class="layer-button" title="Move to the next layer">🔽</button>
-                <div id="current-z-height" class="z-display" title="Current Z-axis height">Z: 0.00</div>
-            </div>
-
-            <button id="go-to-top" class="layer-button" title="Go to the first line of G-code">⏫</button>
-            <button id="line-up" class="layer-button" title="Move up one line in the G-code">⬆️</button>
-            <button id="line-down" class="layer-button" title="Move down one line in the G-code">⬇️</button>
-            <button id="go-to-bottom" class="layer-button" title="Go to the last line of G-code">⏬</button>
-            <button id="update-gcode-button" class="layer-button" style="display: none;" title="Update G-code visualization">⬅️</button>
-	    <br>	
-            <button id="save-gcode-button" class="layer-button" title="Save current G-code to file">💾</button>
-            <button id="load-file-button" class="layer-button" title="Load G-code from a file">📂</button>
-            <button id="clear-display" class="layer-button" title="Clear the current G-code and reset view">🗑️</button>
-            <br>
-            <button id="home-button" class="layer-button" title="Return to home position">🏠</button>
-            <button id="toggle-travel-lines" class="layer-button" title="Toggle visibility of travel moves">🔹</button>
-            <button id="toggle-thick-lines" class="layer-button" title="Toggle between thin and thick line representation">║</button>
-            
-            <br>
-            
-            <div id="render-limit-container">
-                <input type="range" id="render-limit" style="writing-mode: vertical-lr; direction: rtl" title="Adjust how many lines of G-code to render at one time">
-                <input type="number" id="render-limit-display" value="1" min="1" title="Set the number of G-code lines to display at one time">
-            </div>
-        </div>
-
-        <div id="render-limit-container">
-            <input type="range" id="render-limit" style="writing-mode: vertical-lr; direction: rtl"> 
-            <input type="number" id="render-limit-display" value="1" min="1">
+            <div id="highlight-line"></div> <!-- Added for fixed highlight -->
         </div>
     </div>
-	
-	
+    
 <!-- Modal -->
 <div id="info-modal" style="display: none;">
     <button id="modal-close">✖</button>
@@ -95,24 +86,22 @@
   __ _  ___ ___   __| | ___ _ __ 
  / _` |/ __/ _ \ / _` |/ _ \ '__|
 | (_| | (_| (_) | (_| |  __/ |   
- \__, |\___\___/ \__,_|\___|_|   
+ \__, |\___\___/ \__,_|\___|_|   V2.0
  |___/  
  
+
 </pre>	
 		<div class="feature">Search</div>
 		<div class="description">Type in the search box to find specific G-code commands or layers. Use <strong>Enter</strong> to go to the next match, <strong>Shift + Enter</strong> for the previous match.</div>
 
-		<div class="feature">Measurement</div>
-		<div class="description">Click on two points in the 3D visualization to measure distances in XY and Z planes. Useful for understanding spatial relationships in your G-code.</div>
-
 		<div class="feature">Scroll to Render (scroll bar to the left of the gcode)</div>
 		<div class="description">As you scroll through the G-code in the editor, the 3D visualization updates in real-time to reflect the current line.</div>
 
-		<div class="feature">Search Slider (Far right scroll bar)</div>
-		<div class="description">A vertical slider that lets you jump to specific search terms by scrolling.</div>
-
-		<div class="feature">Render Limit</div>
+		<div class="feature">Render Limit Slider</div>
 		<div class="description">Controls how many lines of G-code are rendered at once.</div>
+
+		<div class="feature">Scroll Speed Slider</div>
+		<div class="description">Controls the speed of the scroll bar when playing or scrolling through the G-code with the scroll buttons.</div>
 	
 		<div class="feature">G-code Input</div>
 		<div class="description">Allows you to directly type, paste, load, or drag and drop G-code into the editor.</div>
@@ -156,86 +145,52 @@
 		</div>
 		
 		
-		<div class="feature">🔼 Layer Up</div>
-		<div class="description">Moves the view to the previous layer in the G-code sequence. Also, pressing <strong>Shift + Enter</strong> while in the search input will function similarly.</div>
-
-		<div class="feature">🔽 Layer Down</div>
-		<div class="description">Advances the view to the next layer. Pressing <strong>Enter</strong> in the search input will move to the next match.</div>
-
-		<div class="feature">⏫ Go to Top</div>
-		<div class="description">Jumps to the first line of G-code. Click the button or use the corresponding keyboard shortcut if available.</div>
-
-		<div class="feature">⬆️ Line Up</div>
-		<div class="description">Moves up one line in the G-code. Also, you can use arrow keys when not focused on text input - <strong>Up Arrow</strong> moves up one line.</div>
-
-		<div class="feature">⬇️ Line Down</div>
-		<div class="description">Moves down one line in the G-code. Use <strong>Down Arrow</strong> when not focused on text input for the same effect.</div>
-
-		<div class="feature">⏬ Go to Bottom</div>
-		<div class="description">Jumps to the last line of G-code. Click the button or use the corresponding keyboard shortcut if available.</div>
-
-		<div class="feature">💾 Save G-code</div>
-		<div class="description">Saves the current G-code in the editor to a file.</div>
-
-		<div class="feature">📂 Load File</div>
-		<div class="description">Loads G-code from a file into the editor. Supports drag and drop or file selection.</div>
-
-		<div class="feature">🗑️ Clear Display</div>
-		<div class="description">Clears all G-code from the editor, resets the visualization, and prepares for a new G-code input.</div>
-
-		<div class="feature">🏠 Home</div>
-		<div class="description">Resets the view to the home position, which can mean either the start of the G-code or a predefined home state for the visualization.</div>
-
-		<div class="feature">🔹 Toggle Travel Lines</div>
-		<div class="description">Switches visibility of the travel moves (non-printing movements) in the G-code visualization.</div>
-
-		<div class="feature">║ Toggle Thick Lines</div>
-		<div class="description">Toggles between thin and thick line representations for printing moves.</div>
 
 		<div class="feature">▶️ Play/Pause</div>
 		<div class="description">Starts or stops the simulation of G-code execution. Press <strong>Spacebar</strong> (when not focused on text) to toggle play/pause.</div>
 
-		<div class="feature">⏪ Slow Down</div>
-		<div class="description">Decreases the simulation speed. Click or use keyboard shortcuts for speed adjustment.</div>
+        <div class="feature">⏫ Scroll Up</div>
+		<div class="description">Scrolls up at the speed of the speed slider</div>
 
-		<div class="feature">1x Speed Display</div>
-		<div class="description">Shows the current playback speed of the G-code simulation.</div>
+        <div class="feature">⏬ Scroll Down</div>
+		<div class="description">Scrolls down at the speed of the speed slider</div>
 
-		<div class="feature">⏩ Fast Forward</div>
-		<div class="description">Increases the speed of the G-code simulation. Click or use keyboard shortcuts for speed adjustment.</div>
+		<div class="feature">📂 Load File</div>
+		<div class="description">Loads G-code from a file into the editor. Supports drag and drop or file selection.</div>
+
+		<div class="feature">💾 Save G-code</div>
+		<div class="description">Saves the current G-code in the editor to a file.</div>
+
+		<div class="feature">🏠 Home</div>
+		<div class="description">Resets the view to the home position, which can mean either the start of the G-code or a predefined home state for the visualization.</div>
+
+
+		<div class="feature">🗑️ Clear Display</div>
+		<div class="description">Clears all G-code from the editor, resets the visualization, and prepares for a new G-code input.</div>
+
+
+		<div class="feature">🔹 Toggle Travel Lines</div>
+		<div class="description">Switches visibility of the travel moves (non-printing movements) in the G-code visualization.</div>
+
+		<div class="feature">🔳 Toggle 3d Lines</div>
+		<div class="description">Toggles between 3d rendered and simple line representations for printing moves.</div>
+
+		<div class="feature">📏 Measure distance</div>
+		<div class="description">Toggle measure mode and click on two points in the 3D visualization to measure distances in XY and Z planes. Useful for understanding spatial relationships in your G-code.</div>
 
 		<div class="feature">ℹ️ Info</div>
 		<div class="description">Displays this information modal.</div>
 
 	</div>	
-</div>	
-	
-</body>
-
-
+</div>	    
+    
+<script src="./codemirror.min.js"></script>
 <script src="./three.js"></script>
 <script src="./3.js"></script>
-<script src="gcodeCommands.js"></script>
+<script src="gcodeCommands.js"></script>    
 <script>
 
-
-const textarea = document.getElementById('codeInput');
-
-let buildPlateX = 256;
-let buildPlateY = 256;
-
-({  scene,
-	camera, 
-	renderer, 
-	cube, 
-	setupEventListeners, 
-	renderIfNeeded, 
-	updateTransformations, 
-	DEFAULT_POSITION, 
-	nozzle } = setup3js(buildPlateX, buildPlateY));
-
-document.getElementById('canvasContainer').appendChild(renderer.domElement);
-setupEventListeners(renderer.domElement);
+document.querySelector('.current-line').textContent = 'Welcome to gcoder';
 
 let allLineSegments = [];
 let currentPosition = { x: 0, y: 0, z: 0, e: 0 };
@@ -252,6 +207,7 @@ let sceneChanged = false;
 let sliceLimit = 200;
 const renderLimitSlider = document.getElementById('render-limit');
 const renderLimitDisplay = document.getElementById('render-limit-display');
+let isRelative = false;
 renderLimitSlider.max = 1000;
 renderLimitSlider.value = sliceLimit;
 renderLimitDisplay.value = sliceLimit;
@@ -261,484 +217,2209 @@ const Z_OFFSET = 0.6;
 const printingColor = 0x00CC00;
 const travelColor = 0x66CCFF;
 const rapidMoveColor = 0xCC00CC;
+let buildPlateX = 256;
+let buildPlateY = 256;
+let is3DMode = false;
+let travelLinesVisible = true;
+let coordinates = [];
+let lastVisibleLine = -1;
 
 
 
 
-//// updateCurrentLine runs for every scroll position ////
-function updateCurrentLine() {
-    const lineHeight = 14;
-    const currentStepIndex = Math.floor(textarea.scrollTop / lineHeight);
-    const startLine = Math.max(0, currentStepIndex - sliceLimit);
+document.addEventListener('DOMContentLoaded', function() {
+    // Three.js setup
+    ({  scene,
+        camera, 
+        renderer, 
+        cube, 
+        setupEventListeners, 
+        renderIfNeeded, 
+        updateTransformations, 
+        DEFAULT_POSITION, 
+        nozzle } = setup3js(buildPlateX, buildPlateY));
 
-    let currentStart = { x: 0, y: 0, z: 0 };
+    document.getElementById('canvasContainer').appendChild(renderer.domElement);
+    setupEventListeners(renderer.domElement);
+    camera.addEventListener('change', updatePointSize);
+    setupRaycasting(renderer); 
+    renderIfNeeded();
+});
 
-    for (let i = 0; i < allLineSegments.length; i++) {
-        const segment = allLineSegments[i];
-        if (segment.lineNumber < startLine || segment.lineNumber > currentStepIndex || 
-            (!showTravelLines && (segment.printType === 'travel' || segment.printType === 'rapid'))) {
-            segment.line.visible = false;
-            if (segment.point) segment.point.visible = false;
-        } else {
-            segment.line.visible = true;
-            if (segment.point) {
-                segment.point.visible = true;
-                segment.point.material.opacity = 0;
-                segment.point.position.set(
-                    segment.end.y - (buildPlateX / 2),
-                    -segment.end.x + (buildPlateY / 2),
-                    segment.end.z + Z_OFFSET
-                );
-            }
 
-            let start = i > 0 ? allLineSegments[i - 1].end : currentStart;
-        }
-        currentStart = { ...segment.end };
-    }
 
-    const lastVisibleSegment = allLineSegments.findLast(
-        segment =>
-            segment.lineNumber <= currentStepIndex &&
-            segment.lineNumber >= startLine &&
-            (segment.printType === 'printing' || segment.printType === 'arc' || showTravelLines)
-    );
+let hoveredPoint = null;
+let originalPointColor = null;
+const HIGHLIGHT_COLOR = new THREE.Color(0x0088FF);
+const POINT_SIZE = 12;
+let isPointHovered;
+let raycaster;
+let mouse;
 
-    if (lastVisibleSegment) {
-        currentPosition = lastVisibleSegment.end;
-        currentZHeight = currentPosition.z;
-        document.getElementById('current-z-height').innerText = `Z: ${currentZHeight.toFixed(2)}mm`;
-
-        if (nozzle) {
-            nozzle.position.set(
-                lastVisibleSegment.end.y - buildPlateX / 2,
-                -lastVisibleSegment.end.x + buildPlateY / 2,
-                lastVisibleSegment.end.z + Z_OFFSET + 5
-            );
-        }
-    } else {
-        document.getElementById('current-z-height').innerText = 'Z: 0.00mm';
-        if (nozzle) {
-            nozzle.position.set(-128, 128, Z_OFFSET + 5);
-        }
-    }
-
-    sceneChanged = true;
-    renderer.render(scene, camera);
-
+function setupRaycasting(renderer) {
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+    
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('mouseleave', onMouseLeave);
 }
-
-
-
-//// parseGcode runs once when new gcode is loaded ////
-function parseGCode(gcode) {
-    currentPosition = { x: 0, y: 0, z: 0, e: 0 };
-    isRelativePositioning = false;
-    isRelativeE = false;
-
-    const lines = gcode.split('\n');
-    lineCount = lines.length;
-
-    if (lineCount > 30000) {
-        showUpdateButton();
-    } else {
-        hideUpdateButton();
-    }
-	
-    renderLimitSlider.max = lineCount;
-    renderLimitSlider.value = lineCount;
-    renderLimitDisplay.value = lineCount;
-    sliceLimit = lineCount;
-    clearScene();
-
-    for (let i = 0; i < lineCount; i++) {
-        let line = lines[i].trim();
-        let newPosition = { ...currentPosition };
-        parseLine(line, i, newPosition);
-    }
-    updateCurrentLine();
-}
-
-
-
-
-
-function parseLine(line, lineNumber, position) {
-    const commentIndex = line.indexOf(';');
-    let cmd = commentIndex !== -1 ? line.slice(0, commentIndex).trim().toUpperCase() : line.trim().toUpperCase();
-
-    if (cmd === '') return;
-
-    // Check if it's a movement command with a space after
-    if (!/^G(0|1|2|3) /.test(cmd)) {
-        if (cmd.startsWith('G90')) {
-            isRelativePositioning = false;
-            return;
-        } else if (cmd.startsWith('G91')) {
-            isRelativePositioning = true;
-            return;
-        }
-        return; // Ignore all other commands
-    }
-
-    let eValue = 0;
-    let i = 0;
-
-    while (i < cmd.length) {
-        if ('XYZE'.includes(cmd[i])) {
-            let axis = cmd[i].toLowerCase();
-            let start = i + 1;
-            let end = start;
-            while (end < cmd.length && cmd[end] !== ' ') end++;
-            let value = parseFloat(cmd.slice(start, end));
-
-            if (!isNaN(value)) {
-                if (axis === 'e') {
-                    if (isRelativeE) {
-                        position.e += value;
-                    } else {
-                        position.e = value;
-                    }
-                } else {
-                    if (isRelativePositioning) {
-                        position[axis] += value;
-                    } else {
-                        position[axis] = value;
-                    }
-                }
-            }
-
-            i = end;
-        } else {
-            i++;
-        }
-    }
-
-    processMovement(cmd, lineNumber, position, eValue);
-
-    currentPosition = { ...position };
-}
-
-
-//// ClearScene is only used in parseGcode ////
-function clearScene() {
-    while (allLineSegments.length) {
-        let segment = allLineSegments.pop();
-        if (segment.line) {
-            try {
-                if (segment.line.parent) {
-                    segment.line.parent.remove(segment.line);
-                }
-                scene.remove(segment.line);
-                if (segment.line.geometry) segment.line.geometry.dispose();
-                if (segment.line.material) segment.line.material.dispose();
-            } catch (error) {
-                console.error('Error disposing line:', error);
-            }
-        }
-        if (segment.point) {
-            scene.remove(segment.point);
-            cube.remove(segment.point);
-            if (segment.point.geometry) segment.point.geometry.dispose();
-            if (segment.point.material) segment.point.material.dispose();
-        }
-    }
-}
-
-
-
-
-//// processMovement is only used in parseGcode ////
-let runningStart = { x: 0, y: 0, z: 0 }; 
-function processMovement(cmd, lineNumber, position, eValue) {
-    let isMove = cmd.startsWith('G0') || cmd.startsWith('G1') || cmd.startsWith('G2') || cmd.startsWith('G3');
-    let isPrinting = cmd.includes('E') || cmd.startsWith('G2') || cmd.startsWith('G3');
-
-    if (isMove) {
-        let start = new THREE.Vector3(
-            runningStart.y - buildPlateX / 2,
-            -runningStart.x + buildPlateY / 2,
-            runningStart.z + Z_OFFSET
-        );
-
-        let end = new THREE.Vector3(
-            position.y - buildPlateX / 2,
-            -position.x + buildPlateY / 2,
-            position.z + Z_OFFSET
-        );
-
-        let lineGeometry = setupGeometry(start, end, isPrinting, cmd.startsWith('G0'), eValue);
-        cube.add(lineGeometry);
-
-        let pointGeometry = new THREE.BufferGeometry();
-        pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
-
-        let pointMaterial = new THREE.PointsMaterial({
-            color: 0x0000ff,
-            size: 15,
-            sizeAttenuation: false,
-            transparent: true,
-            opacity: 0,
-            depthWrite: false,
-            depthTest: true
-        });
-
-        let point = new THREE.Points(pointGeometry, pointMaterial);
-        point.position.copy(end);
-        point.userData = {
-            lineNumber: lineNumber,
-            x: position.x,
-            y: position.y,
-            z: position.z
-        };
-
-        point.frustumCulled = false;
-        point.renderOrder = 10000;
-        cube.add(point);
-
-        allLineSegments.push({
-            line: lineGeometry,
-            point: point,
-            lineNumber: lineNumber,
-            end: { ...position },
-            printType: cmd.startsWith('G2') || cmd.startsWith('G3') ? 'arc' : cmd.startsWith('G0') ? 'rapid' : isPrinting ? 'printing' : 'travel'
-        });
-
-        runningStart = { ...position };
-    }
-}
-
-
-//// Raycasting and Point Selection and Measurement ////
-let raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
-raycaster.params.Points.threshold = 0.6;
-
-let lastClickedPoint = null;
-let secondClickedPoint = null;
-let temporaryLine = null;
-let persistentLine = null;
-let lastClickTime = 0;
 
 function onMouseMove(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    updateRaycasting();
 
-    if (event.target === document.getElementById('render-limit')) return;
+}
 
-    event.preventDefault();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    
-    const intersects = raycaster.intersectObjects(cube.children.filter(obj => obj.type === 'Points' && obj.visible));
+function onMouseLeave() {
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
 
-    cube.children.forEach(child => {
-        if (child.type === 'Points' && child !== lastClickedPoint && child !== secondClickedPoint) {
-            child.material.color.set(0xff0000);
-            child.material.opacity = 0;
-        }
-    });
+    const points = group.children.find(child => child instanceof THREE.Points);
+    if (!points) return;
 
-    if (intersects.length > 0) {
-        const point = intersects[0].object;
-        if (point !== lastClickedPoint && point !== secondClickedPoint) {
-            point.material.color.set(0x0000ff);
-            point.material.opacity = 1;
-        }
-        const data = point.userData;
-        document.getElementById('bottom-overlay').innerText = `Line ${data.lineNumber}: X:${data.x.toFixed(2)}, Y:${data.y.toFixed(2)}, Z:${data.z.toFixed(2)}`;
-
-        if (lastClickedPoint && lastClickedPoint !== point && !secondClickedPoint) {
-            const distanceXYZ = lastClickedPoint.position.distanceTo(point.position);
-            const distanceXY = Math.sqrt(
-                Math.pow(lastClickedPoint.position.x - point.position.x, 2) +
-                Math.pow(lastClickedPoint.position.y - point.position.y, 2)
-            );
-            const distanceZ = Math.abs(lastClickedPoint.position.z - point.position.z);
-
-            if (temporaryLine) {
-                cube.remove(temporaryLine);
-                temporaryLine.geometry.dispose();
-            }
-
-            const start = lastClickedPoint.position.clone();
-            const end = point.position.clone();
-            const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-            const material = new THREE.LineBasicMaterial({ 
-                color: 0xFFFF00, 
-                depthTest: false,
-                transparent: true, 
-                opacity: 1 
-            });
-            temporaryLine = new THREE.Line(geometry, material);
-            temporaryLine.renderOrder = 1;
-            temporaryLine.frustumCulled = false;
-            cube.add(temporaryLine);
-            document.getElementById('measurement-display').innerText = 
-                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
-                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
-                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
-        } else if (secondClickedPoint) {
-            const distanceXYZ = lastClickedPoint.position.distanceTo(secondClickedPoint.position);
-            const distanceXY = Math.sqrt(
-                Math.pow(lastClickedPoint.position.x - secondClickedPoint.position.x, 2) +
-                Math.pow(lastClickedPoint.position.y - secondClickedPoint.position.y, 2)
-            );
-            const distanceZ = Math.abs(lastClickedPoint.position.z - secondClickedPoint.position.z);
-            document.getElementById('measurement-display').innerText = 
-                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
-                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
-                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
-        }
-
-    } else {
-        document.getElementById('bottom-overlay').innerText = '';
-
-        // If no point is hovered but one or both points have been clicked
-        if (lastClickedPoint && !secondClickedPoint) {
-            document.getElementById('measurement-display').innerText = `Line ${lastClickedPoint.userData.lineNumber}: X:${lastClickedPoint.userData.x.toFixed(2)}, Y:${lastClickedPoint.userData.y.toFixed(2)}, Z:${lastClickedPoint.userData.z.toFixed(2)}`;
-        } else if (secondClickedPoint) {
-            const distanceXYZ = lastClickedPoint.position.distanceTo(secondClickedPoint.position);
-            const distanceXY = Math.sqrt(
-                Math.pow(lastClickedPoint.position.x - secondClickedPoint.position.x, 2) +
-                Math.pow(lastClickedPoint.position.y - secondClickedPoint.position.y, 2)
-            );
-            const distanceZ = Math.abs(lastClickedPoint.position.z - secondClickedPoint.position.z);
-            document.getElementById('measurement-display').innerText = 
-                `Distance XY: ${distanceXY.toFixed(2)} mm\n` +
-                `Distance Z: ${distanceZ.toFixed(2)} mm\n` +
-                `Total Distance: ${distanceXYZ.toFixed(2)} mm`;
-        } else {
-            document.getElementById('measurement-display').innerText = '';
-        }
-
-        if (temporaryLine) {
-            cube.remove(temporaryLine);
-            temporaryLine.geometry.dispose();
-            temporaryLine = null;
-        }
+    const positions = points.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i++) {
+        positions[i] = NaN;
     }
-
+    
+    const colors = points.geometry.attributes.color.array;
+    for (let i = 0; i < colors.length; i++) {
+        colors[i] = points.userData.originalColors[i];
+    }
+    
+    points.geometry.attributes.position.needsUpdate = true;
+    points.geometry.attributes.color.needsUpdate = true;
     renderer.render(scene, camera);
 }
 
-function onMouseClick(event) {
+function updateRaycasting() {
+    if (measureMode) {
+        updateMeasureRaycasting();
+        return;
+    }
 
-    if (event.target === document.getElementById('render-limit')) return;
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
 
-    event.preventDefault();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const points = group.children.find(child => child instanceof THREE.Points);
+    const line = group.children.find(child => child instanceof THREE.Line);
+    if (!points || !line) return;
+
+    // Reset all points to NaN
+    const positions = points.geometry.attributes.position.array;
+    const originalPositions = points.geometry.attributes.originalPosition.array;
+    for (let i = 0; i < positions.length; i++) {
+        positions[i] = NaN;
+    }
+
+    // Get current editor scroll position and render limit
+    const currentEditorLine = Math.floor(editor.getScrollInfo().top / lineHeight);
+    const renderLimit = parseInt(renderLimitDisplay.value) || 200;
+    const startLineNumber = Math.max(0, currentEditorLine - renderLimit + 1);
+
+    // Update raycaster with current mouse position
     raycaster.setFromCamera(mouse, camera);
     
-    const intersects = raycaster.intersectObjects(cube.children.filter(obj => obj.type === 'Points' && obj.visible));
+    // Calculate viewing angle factor
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    const upVector = new THREE.Vector3(0, 0, 1);
+    const angleFactor = Math.abs(cameraDirection.dot(upVector));
     
-    if (intersects.length > 0) {
-        const clickedPoint = intersects[0].object;
-        let currentTime = new Date().getTime();
+    // Adjust threshold based on both zoom and viewing angle
+    const zoomFactor = camera.position.z;
+    const baseThreshold = Math.max(0.5, Math.min(2, zoomFactor / 250));
+    const angleCompensation = (1 - angleFactor) * (zoomFactor < 200 ? 2 : 1);
+    raycaster.params.Points.threshold = baseThreshold + angleCompensation;
+
+    const vertexToCoordMap = points.userData.vertexToCoordMap;
+    const travelAttribute = line.geometry.attributes.travel;
+    const linePositions = line.geometry.attributes.position.array;
+
+    // Make visible points available for raycasting
+    for (let vertexIndex = 0; vertexIndex < vertexToCoordMap.length; vertexIndex++) {
+        const coordIndex = vertexToCoordMap[vertexIndex];
+        const baseIndex = vertexIndex * 3;
+        const moveType = travelAttribute.array[vertexIndex];
         
-        // Check for double click
-        if (currentTime - lastClickTime < 300) { 
-            const lineNumber = clickedPoint.userData.lineNumber + 1;
-            const lineHeight = 14;
-            document.getElementById('codeInput').scrollTop = lineHeight * (lineNumber - 1);
-            lineNumbersDiv.scrollTop = document.getElementById('codeInput').scrollTop;
-            updateSliderAndLayerPositions();
-            logCurrentLine();
-        } else {
-            if (!lastClickedPoint) {
-                // First click
-                lastClickedPoint = clickedPoint;
-                if (!clickedPoint.material.userData.originalColor) {
-                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
-                }
-                clickedPoint.material.color.setHex(0xFFFFFF);
-                clickedPoint.material.opacity = 1;
-            } else if (lastClickedPoint && !secondClickedPoint) {
-                // Second click
-                secondClickedPoint = clickedPoint;
-                if (!clickedPoint.material.userData.originalColor) {
-                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
-                }
-                clickedPoint.material.color.setHex(0xFFFFFF);
-                clickedPoint.material.opacity = 1;
-
-                if (temporaryLine) {
-                    // Turn the temporary line into a persistent one
-                    persistentLine = temporaryLine;
-                    temporaryLine = null;
-                } else {
-                    // If no temporary line, create one as persistent
-                    const start = lastClickedPoint.position.clone();
-                    const end = clickedPoint.position.clone();
-                    const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-                    persistentLine = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0xFFFFFF }));
-                    cube.add(persistentLine);
-                }
-            } else {
-                // Reset on third click or by clicking another point
-                resetPointsAndLines();
-                lastClickedPoint = clickedPoint;
-
-                if (!clickedPoint.material.userData.originalColor) {
-                    clickedPoint.material.userData.originalColor = clickedPoint.material.color.getHex();
-                }
-                clickedPoint.material.color.setHex(0xFFFFFF);
-                clickedPoint.material.opacity = 1;
-            }
-        }
-        lastClickTime = currentTime;
-    } else {
-        // Reset if clicked outside a point
-        if (new Date().getTime() - lastClickTime >= 300) {
-            resetPointsAndLines();
+        if (coordIndex >= startLineNumber && 
+            coordIndex <= currentEditorLine && 
+            (travelLinesVisible || moveType === 0) &&
+            !isNaN(linePositions[baseIndex])) {
+                
+            positions[baseIndex] = originalPositions[baseIndex];
+            positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+            positions[baseIndex + 2] = originalPositions[baseIndex + 2];
         }
     }
-	
+    
+    points.geometry.attributes.position.needsUpdate = true;
+
+    // Perform raycasting
+    const intersects = raycaster.intersectObject(points);
+    
+    // Reset positions
+    for (let i = 0; i < positions.length; i++) {
+        positions[i] = NaN;
+    }
+    
+    // Remove any existing double-click listener
+    renderer.domElement.ondblclick = null;
+    
+    if (intersects.length > 0) {
+        const intersectedIndex = intersects[0].index;
+        const baseIndex = intersectedIndex * 3;
+        const coordIndex = vertexToCoordMap[intersectedIndex];
+        const moveType = travelAttribute.array[intersectedIndex];
+        
+        if (coordIndex >= startLineNumber && 
+            coordIndex <= currentEditorLine && 
+            (travelLinesVisible || moveType === 0) &&
+            !isNaN(linePositions[baseIndex])) {
+            
+            positions[baseIndex] = originalPositions[baseIndex];
+            positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+            positions[baseIndex + 2] = originalPositions[baseIndex + 2];
+            
+            const colors = points.geometry.attributes.color.array;
+            colors[baseIndex] = 0;     // R
+            colors[baseIndex + 1] = 0; // G
+            colors[baseIndex + 2] = 1; // B
+            
+            points.geometry.attributes.position.needsUpdate = true;
+            points.geometry.attributes.color.needsUpdate = true;
+
+            if (coordinates[coordIndex]) {
+                // Update info panel in hover mode
+                updateInfoPanel(coordIndex - 1, true);
+                isPointHovered = true;
+                
+                // Add double-click listener
+                renderer.domElement.ondblclick = function() {
+                    goToLine(coordIndex);
+                };
+            }
+        }
+    } else {
+        // When no point is hovered, reset to current line
+        if (isPointHovered) {
+            const scrollInfo = editor.getScrollInfo();
+            const currentTopLine = Math.floor(scrollInfo.top / lineHeight);
+            updateInfoPanel(currentTopLine);
+            isPointHovered = false;
+        }
+    }
+
     renderer.render(scene, camera);
 }
 
-function resetPointsAndLines() {
-    if (lastClickedPoint) {
-        lastClickedPoint.material.color.setHex(lastClickedPoint.material.userData.originalColor);
-        lastClickedPoint.material.opacity = 0;
-        lastClickedPoint = null;
+
+///MEASURE MODE////
+
+let measureMode = false;
+let selectedPointIndex = null;
+let selectedPointCoords = null;
+let secondPointIndex = null;
+let secondPointCoords = null;
+let measureLine = null; // For the temporary line
+const measureLineMaterial = new THREE.LineBasicMaterial({ color: 0xffff00 }); // Yellow line
+
+const coordDisplay = document.createElement('div');
+coordDisplay.id = 'coordinate-display';
+coordDisplay.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0);
+    color: white;
+    padding: 8px;
+    border-radius: 5px;
+    font-family: monospace;
+    z-index: 1000;
+    display: none;
+    width: auto;
+    backdrop-filter: blur(5px);
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+`;
+
+//Measurement Display Divs
+const point1Section = document.createElement('div');
+const point2Section = document.createElement('div');
+const measureSection = document.createElement('div');
+
+point1Section.style.cssText = 'min-width: 90px;';
+point2Section.style.cssText = 'min-width: 90px;';
+measureSection.style.cssText = 'min-width: 90px;';
+
+coordDisplay.appendChild(point1Section);
+coordDisplay.appendChild(point2Section);
+coordDisplay.appendChild(measureSection);
+
+document.body.appendChild(coordDisplay);
+
+function updateCoordinateDisplay(hoveredPoint = null) {
+    if (!measureMode) {
+        coordDisplay.style.display = 'none';
+        return;
     }
-    if (secondClickedPoint) {
-        secondClickedPoint.material.color.setHex(secondClickedPoint.material.userData.originalColor);
-        secondClickedPoint.material.opacity = 0;
-        secondClickedPoint = null;
+
+    coordDisplay.style.display = 'flex';
+    
+    const group = scene.getObjectByName("allLines");
+    const points = group?.children.find(child => child instanceof THREE.Points);
+    const vertexToCoordMap = points?.userData.vertexToCoordMap;
+
+    // Get coordinates for Point 1 (selected point or hover if no selection)
+    let firstGcodePoint = null;
+    let firstLineNumber = 'N/A';
+    
+    if (selectedPointIndex !== null && vertexToCoordMap) {
+        // If you have a selected point, use it for Point 1
+        firstGcodePoint = coordinates[vertexToCoordMap[selectedPointIndex]];
+        firstLineNumber = vertexToCoordMap[selectedPointIndex] + 1;
+    } else if (hoveredPoint && vertexToCoordMap) {
+        // If no selection yet, show hover point in Point 1
+        const hoveredVertexIndex = Math.floor(hoveredPoint.index / 3);
+        firstGcodePoint = coordinates[vertexToCoordMap[hoveredVertexIndex]];
+        firstLineNumber = vertexToCoordMap[hoveredVertexIndex] + 1;
     }
-    if (persistentLine) {
-        cube.remove(persistentLine);
-        persistentLine.geometry.dispose();
-        persistentLine = null;
+
+    // Get coordinates for Point 2
+    let secondGcodePoint = null;
+    let secondLineNumber = 'N/A';
+    
+    if (secondPointIndex !== null && vertexToCoordMap) {
+        // If second point is selected, always show it
+        secondGcodePoint = coordinates[vertexToCoordMap[secondPointIndex]];
+        secondLineNumber = vertexToCoordMap[secondPointIndex] + 1;
+    } else if (selectedPointIndex !== null && hoveredPoint && vertexToCoordMap) {
+        // If only first point is selected, show hover point
+        const hoveredVertexIndex = Math.floor(hoveredPoint.index / 3);
+        secondGcodePoint = coordinates[vertexToCoordMap[hoveredVertexIndex]];
+        secondLineNumber = vertexToCoordMap[hoveredVertexIndex] + 1;
     }
-    if (temporaryLine) {
-        cube.remove(temporaryLine);
-        temporaryLine.geometry.dispose();
-        temporaryLine = null;
+
+    // Update Point 1 section
+    point1Section.innerHTML = `
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 2px;">
+            <strong>Point 1</strong>
+        </div>
+        <div style="line-height: 1.2;">
+            L#: ${firstLineNumber}<br>
+            X: ${firstGcodePoint ? firstGcodePoint.x.toFixed(2) : 'N/A'}<br>
+            Y: ${firstGcodePoint ? firstGcodePoint.y.toFixed(2) : 'N/A'}<br>
+            Z: ${firstGcodePoint ? firstGcodePoint.z.toFixed(2) : 'N/A'}
+        </div>
+    `;
+
+    // Update Point 2 section
+    point2Section.innerHTML = `
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 2px;">
+            <strong>Point 2</strong>
+        </div>
+        <div style="line-height: 1.2;">
+            L#: ${secondLineNumber}<br>
+            X: ${secondGcodePoint ? secondGcodePoint.x.toFixed(2) : 'N/A'}<br>
+            Y: ${secondGcodePoint ? secondGcodePoint.y.toFixed(2) : 'N/A'}<br>
+            Z: ${secondGcodePoint ? secondGcodePoint.z.toFixed(2) : 'N/A'}
+        </div>
+    `;
+
+    // Calculate and update measurements
+    if (firstGcodePoint && secondGcodePoint) {
+        const dx = secondGcodePoint.x - firstGcodePoint.x;
+        const dy = secondGcodePoint.y - firstGcodePoint.y;
+        const dz = secondGcodePoint.z - firstGcodePoint.z;
+
+        const xyDistance = Math.sqrt(dx * dx + dy * dy);
+        const zDistance = Math.abs(dz);
+        const totalDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+        measureSection.innerHTML = `
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 2px;">
+                <strong>Distance</strong>
+            </div>
+            <div style="line-height: 1.2;">
+                XY: ${xyDistance.toFixed(2)}<br>
+                Z: ${zDistance.toFixed(2)}<br>
+                3D: ${totalDistance.toFixed(2)}
+            </div>
+        `;
+    } else {
+        measureSection.innerHTML = `
+            <div style="border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 2px;">
+                <strong>Dist</strong>
+            </div>
+            <div style="line-height: 1.2;">
+                XY: N/A<br>
+                Z: N/A<br>
+                3D: N/A
+            </div>
+        `;
     }
-    document.getElementById('measurement-display').innerText = '';
-    document.getElementById('bottom-overlay').innerText = '';
 }
 
-// Add event listener for the Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        resetPointsAndLines();
-        renderer.render(scene, camera);
+
+function updateMeasureRaycasting() {
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
+
+    const points = group.children.find(child => child instanceof THREE.Points);
+    const line = group.children.find(child => child instanceof THREE.Line);
+    if (!points || !line) return;
+
+    // Reset all points to NaN except selected points
+    const positions = points.geometry.attributes.position.array;
+    const originalPositions = points.geometry.attributes.originalPosition.array;
+    for (let i = 0; i < positions.length; i++) {
+        const vertexIndex = Math.floor(i / 3);
+        if ((selectedPointIndex === null || vertexIndex !== selectedPointIndex) && 
+            (secondPointIndex === null || vertexIndex !== secondPointIndex)) {
+            positions[i] = NaN;
+        }
+    }
+
+    // Get current editor scroll position and render limit
+    const currentEditorLine = Math.floor(editor.getScrollInfo().top / lineHeight) + 1;
+    const renderLimit = parseInt(renderLimitDisplay.value) || 200;
+    const startLineNumber = Math.max(0, currentEditorLine - renderLimit + 1);
+
+    // Update raycaster with current mouse position
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Calculate viewing angle factor
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    const upVector = new THREE.Vector3(0, 0, 1);
+    const angleFactor = Math.abs(cameraDirection.dot(upVector));
+    
+    // Adjust threshold based on both zoom and viewing angle
+    const zoomFactor = camera.position.z;
+    const baseThreshold = Math.max(0.5, Math.min(2, zoomFactor / 250));
+    const angleCompensation = (1 - angleFactor) * (zoomFactor < 200 ? 2 : 1);
+    raycaster.params.Points.threshold = baseThreshold + angleCompensation;
+
+    const vertexToCoordMap = points.userData.vertexToCoordMap;
+    const travelAttribute = line.geometry.attributes.travel;
+    const linePositions = line.geometry.attributes.position.array;
+
+    // Make visible points available for raycasting
+    for (let vertexIndex = 0; vertexIndex < vertexToCoordMap.length; vertexIndex++) {
+        const coordIndex = vertexToCoordMap[vertexIndex];
+        const baseIndex = vertexIndex * 3;
+        const moveType = travelAttribute.array[vertexIndex];
+        
+        if (coordIndex >= startLineNumber && 
+            coordIndex <= currentEditorLine && 
+            (travelLinesVisible || moveType === 0) &&
+            !isNaN(linePositions[baseIndex])) {
+                
+            positions[baseIndex] = originalPositions[baseIndex];
+            positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+            positions[baseIndex + 2] = originalPositions[baseIndex + 2];
+        }
+    }
+    
+    points.geometry.attributes.position.needsUpdate = true;
+
+    // Perform raycasting
+    const intersects = raycaster.intersectObject(points);
+    
+    // Reset positions except selected points
+    for (let i = 0; i < positions.length; i++) {
+        const vertexIndex = Math.floor(i / 3);
+        if ((selectedPointIndex === null || vertexIndex !== selectedPointIndex) && 
+            (secondPointIndex === null || vertexIndex !== secondPointIndex)) {
+            positions[i] = NaN;
+        }
+    }
+    
+    // Remove any existing mousedown listener
+    renderer.domElement.onmousedown = null;
+
+    if (intersects.length > 0) {
+        const intersectedIndex = intersects[0].index;
+        const baseIndex = intersectedIndex * 3;
+        const coordIndex = vertexToCoordMap[intersectedIndex];
+        const moveType = travelAttribute.array[intersectedIndex];
+        
+        if (coordIndex >= startLineNumber && 
+            coordIndex <= currentEditorLine && 
+            (travelLinesVisible || moveType === 0) &&
+            !isNaN(linePositions[baseIndex])) {
+            
+            positions[baseIndex] = originalPositions[baseIndex];
+            positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+            positions[baseIndex + 2] = originalPositions[baseIndex + 2];
+            
+            const colors = points.geometry.attributes.color.array;
+            
+            // In measure mode, always show hover point as red unless it's selected
+            if (measureMode && intersectedIndex !== selectedPointIndex && intersectedIndex !== secondPointIndex) {
+                colors[baseIndex] = 1;     // R (red)
+                colors[baseIndex + 1] = 0; // G
+                colors[baseIndex + 2] = 0; // B
+                points.geometry.attributes.color.needsUpdate = true;
+            }
+
+            if (measureMode) {
+                // Update coordinate display with current hover point
+                updateCoordinateDisplay(intersects[0]);
+
+                if (selectedPointIndex === null) {
+                    // First point selection
+                    renderer.domElement.onmousedown = () => {
+                        selectedPointIndex = intersectedIndex;
+                        selectedPointCoords = new THREE.Vector3(
+                            originalPositions[baseIndex],
+                            originalPositions[baseIndex + 1],
+                            originalPositions[baseIndex + 2]
+                        );
+
+                        // Update colors for the selected point
+                        colors[baseIndex] = 1;     // R
+                        colors[baseIndex + 1] = 1; // G
+                        colors[baseIndex + 2] = 1; // B
+                        points.geometry.attributes.color.needsUpdate = true;
+
+                        // Clear previous line if exists
+                        if (measureLine) {
+                            cube.remove(measureLine);
+                            measureLine = null;
+                        }
+                        
+                        updateCoordinateDisplay(intersects[0]);
+                    };
+                } else if (secondPointIndex === null) {
+                    // Second point selection or hover
+                    const currentCoords = new THREE.Vector3(
+                        originalPositions[baseIndex],
+                        originalPositions[baseIndex + 1],
+                        originalPositions[baseIndex + 2]
+                    );
+                    
+                    // Show hover measurement
+                    updateCoordinateDisplay(intersects[0]);
+                    
+                    // Add mousedown handler for second point
+                    renderer.domElement.onmousedown = () => {
+                        if (intersectedIndex !== selectedPointIndex) {
+                            secondPointIndex = intersectedIndex;
+                            secondPointCoords = currentCoords.clone();
+                            
+                            // Update colors for the second point (white)
+                            colors[baseIndex] = 1;     // R
+                            colors[baseIndex + 1] = 1; // G
+                            colors[baseIndex + 2] = 1; // B
+                            points.geometry.attributes.color.needsUpdate = true;
+                            
+                            updateCoordinateDisplay(intersects[0]);
+
+                            // Create the measurement line
+                            if (measureLine) {
+                                cube.remove(measureLine);
+                            }
+                            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                                selectedPointCoords,
+                                secondPointCoords
+                            ]);
+                            measureLine = new THREE.Line(lineGeometry, measureLineMaterial);
+                            cube.add(measureLine);
+                        }
+                    };
+
+                    // Draw temporary measure line
+                    if (measureLine) {
+                        cube.remove(measureLine);
+                    }
+                    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                        selectedPointCoords,
+                        currentCoords
+                    ]);
+                    measureLine = new THREE.Line(lineGeometry, measureLineMaterial);
+                    cube.add(measureLine);
+                } else {
+                    // Handle selection of new first point when two points are already selected
+                    const currentCoords = new THREE.Vector3(
+                        originalPositions[baseIndex],
+                        originalPositions[baseIndex + 1],
+                        originalPositions[baseIndex + 2]
+                    );
+
+                    updateCoordinateDisplay(intersects[0]);
+
+                    renderer.domElement.onmousedown = () => {
+                        // Reset all colors to blue
+                        for (let i = 0; i < colors.length; i += 3) {
+                            colors[i] = 0;     // R
+                            colors[i + 1] = 0; // G
+                            colors[i + 2] = 1; // B
+                        }
+                        
+                        // Start new measurement with this point
+                        selectedPointIndex = intersectedIndex;
+                        secondPointIndex = null;
+                        selectedPointCoords = currentCoords.clone();
+                        secondPointCoords = null;
+                        
+                        // Set new point color to white
+                        colors[baseIndex] = 1;     // R
+                        colors[baseIndex + 1] = 1; // G
+                        colors[baseIndex + 2] = 1; // B
+                        
+                        points.geometry.attributes.color.needsUpdate = true;
+                        
+                        // Remove temporary line if exists
+                        if (measureLine) {
+                            cube.remove(measureLine);
+                            measureLine = null;
+                        }
+                        
+                        updateCoordinateDisplay(intersects[0]);
+                    };
+                }
+            }
+            
+            points.geometry.attributes.position.needsUpdate = true;
+            points.geometry.attributes.color.needsUpdate = true;
+
+            if (coordinates[coordIndex]) {
+                // Update info panel in hover mode
+                updateInfoPanel(coordIndex, true);
+                isPointHovered = true;
+            }
+        }
+    } else {
+        // When no point is hovered
+        if (isPointHovered) {
+            const scrollInfo = editor.getScrollInfo();
+            const currentLine = Math.floor(scrollInfo.top / lineHeight);
+            updateInfoPanel(currentLine);
+            isPointHovered = false;
+        }
+        
+        // If you have points selected, show their measurement
+        if (selectedPointIndex !== null) {
+            if (secondPointIndex !== null) {
+                updateCoordinateDisplay(null);
+            } else {
+                updateCoordinateDisplay(null);
+            }
+        }
+
+        // Keep the line if both points are selected
+        if (selectedPointIndex !== null && secondPointIndex !== null) {
+            if (!measureLine) {
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                    selectedPointCoords,
+                    secondPointCoords
+                ]);
+                measureLine = new THREE.Line(lineGeometry, measureLineMaterial);
+                cube.add(measureLine);
+            }
+        } else {
+            // Remove temporary line if exists and no point is hovered or only one point is selected
+            if (measureLine) {
+                cube.remove(measureLine);
+                measureLine = null;
+            }
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+
+
+function clearSelectedPoint() {
+    selectedPointIndex = null;
+    selectedPointCoords = null;
+    secondPointIndex = null;
+    secondPointCoords = null;
+    
+    const group = scene.getObjectByName("allLines");
+    if (group) {
+        const points = group.children.find(child => child instanceof THREE.Points);
+        if (points) {
+            // Reset all positions to NaN
+            const positions = points.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i++) {
+                positions[i] = NaN;
+            }
+            points.geometry.attributes.position.needsUpdate = true;
+            
+            // Reset all colors to blue
+            const colors = points.geometry.attributes.color.array;
+            for (let i = 0; i < colors.length; i += 3) {
+                colors[i] = 0;     // R
+                colors[i + 1] = 0; // G
+                colors[i + 2] = 1; // B
+            }
+            points.geometry.attributes.color.needsUpdate = true;
+        }
+    }
+
+    // Remove the temporary line if it exists
+    if (measureLine) {
+        cube.remove(measureLine);
+        measureLine = null;
+    }
+
+    renderer.domElement.onmousedown = null;
+    // Hide display
+    coordDisplay.style.display = 'none';
+}
+
+function exitMeasureMode() {
+    measureMode = false;
+    clearSelectedPoint();
+    const measureButton = document.getElementById('measure-button');
+    measureButton.style.backgroundColor = '#333333';
+}
+
+// Add escape key handler
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        exitMeasureMode();
     }
 });
 
-document.addEventListener('mousemove', onMouseMove, false);
-document.getElementById('canvasContainer').addEventListener('click', onMouseClick, false);
+document.getElementById('measure-button').addEventListener('click', toggleMeasureMode);
 
-////End Raycasting and Point Selection ////
+let previousMode = false; // Store previous 3D/2D state
+
+function toggleMeasureMode() {
+    measureMode = !measureMode;
+    const measureButton = document.getElementById('measure-button');
+    measureButton.style.backgroundColor = measureMode ? 'white' : '#333333';
+    
+    if (measureMode) {
+        // Store current mode and force 2D
+        previousMode = is3DMode;
+        if (is3DMode) {
+            is3DMode = false;
+            document.getElementById('toggle-3d').textContent = '🔳';
+            updateVisualizationFromEditor();
+        }
+        coordDisplay.style.display = 'flex';
+        updateCoordinateDisplay(); // Initial update
+    } else {
+        // Restore previous mode
+        if (previousMode) {
+            is3DMode = true;
+            document.getElementById('toggle-3d').textContent = '│';
+            updateVisualizationFromEditor();
+        }
+        clearSelectedPoint();
+        coordDisplay.style.display = 'none';
+    }
+}
+///END MEASURE MODE////
+
+
+
+function updatePointSize() {
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
+
+    const points = group.children.find(child => child instanceof THREE.Points);
+    if (!points) return;
+
+    const zoomFactor = camera.position.z;
+    const size = Math.max(8, Math.min(16, 12 * (500 / zoomFactor)));
+    points.material.size = size;
+    points.material.needsUpdate = true;
+}
+
+
+
+function onMouseLeave() {
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
+
+    const points = group.children.find(child => child instanceof THREE.Points);
+    if (!points) return;
+
+    const positions = points.geometry.attributes.position.array;
+    const colors = points.geometry.attributes.color.array;
+
+    // Reset positions to NaN except for selected points in measure mode
+    for (let i = 0; i < positions.length; i++) {
+        const vertexIndex = Math.floor(i / 3);
+        if (!measureMode || 
+            (vertexIndex !== selectedPointIndex && 
+             vertexIndex !== secondPointIndex)) {
+            positions[i] = NaN;
+        }
+    }
+    
+    // Reset colors while preserving selected points in measure mode
+    for (let i = 0; i < colors.length; i += 3) {
+        const vertexIndex = Math.floor(i / 3);
+        if (!measureMode || 
+            (vertexIndex !== selectedPointIndex && 
+             vertexIndex !== secondPointIndex)) {
+            colors[i] = points.userData.originalColors[i];
+            colors[i + 1] = points.userData.originalColors[i + 1];
+            colors[i + 2] = points.userData.originalColors[i + 2];
+        } else {
+            // Keep selected points white
+            colors[i] = 1;     // R
+            colors[i + 1] = 1; // G
+            colors[i + 2] = 1; // B
+        }
+    }
+    
+    points.geometry.attributes.position.needsUpdate = true;
+    points.geometry.attributes.color.needsUpdate = true;
+    renderer.render(scene, camera);
+}
+
+function resetPointColors() {
+    const group = scene.getObjectByName("allLines");
+    if (!group) return;
+
+    const points = group.children[1];
+    if (!points || !(points instanceof THREE.Points)) return;
+
+    const colors = points.geometry.attributes.color.array;
+    for (let i = 0; i < colors.length; i++) {
+        colors[i] = points.userData.originalColors[i];
+    }
+    points.geometry.attributes.color.needsUpdate = true;
+    renderer.render(scene, camera);
+}
+
+
+
+function drawCoordinates(coordinates) {
+    if (is3DMode) {
+        console.log(`Drawing ${coordinates.length} coordinates`);
+        const chunkSize = 10000;
+        const group = new THREE.Group();
+        group.name = "allLines";
+
+        const lineVisibilityMap = new Map();
+        coordinates.forEach((coord, index) => {
+            if (coord.hasCoordinates) {
+                lineVisibilityMap.set(coord.i, index);
+            }
+        });
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.2);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        directionalLight.position.set(50, 150, 50);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        scene.add(directionalLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 0.6);
+        spotLight.position.set(-100, -100, 200);
+        spotLight.angle = Math.PI / 4;
+        spotLight.penumbra = 0.1;
+        spotLight.decay = 1;
+        spotLight.distance = 500;
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 512;
+        spotLight.shadow.mapSize.height = 512;
+        scene.add(spotLight);
+
+
+        // Add base plane
+        const planeGeometry = new THREE.PlaneGeometry(buildPlateX, buildPlateY);
+        const planeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xcccccc,  // 0x000000,
+            roughness: 0.8,
+            transparent: true,
+            opacity: 0
+        });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.receiveShadow = true;
+        plane.position.z = 0; 
+        group.add(plane);
+
+        for (let i = 0; i < coordinates.length; i += chunkSize) {
+            const chunk = coordinates.slice(i, i + chunkSize);
+            const validCoords = chunk.filter(coord => coord.hasCoordinates);
+            const mesh = drawChunk(
+                validCoords,
+                validCoords.map(coord => coord.i),
+                lineVisibilityMap,
+                i > 0 ? coordinates[i - 1] : null,
+                i
+            );
+            mesh.visible = true;
+            group.add(mesh);
+        }
+
+        scene.add(group);
+        if (cube) cube.add(group);
+        renderer.render(scene, camera);
+    } else {
+        const group = new THREE.Group();
+        group.name = "allLines";
+        
+        const lineGeometry = new THREE.BufferGeometry();
+        const pointGeometry = new THREE.BufferGeometry();
+        
+        const positions = [];
+        const pointPositions = [];
+        const originalPointPositions = [];
+        const colors = [];
+        const pointColors = [];
+        const travelFlags = [];
+        const vertexToCoordMap = [];
+
+        let lastX = 0, lastY = 0, lastZ = 0;
+
+        coordinates.forEach((coord, index) => {
+            if (!coord.hasCoordinates) return;
+            
+            const x = coord.x ?? lastX;
+            const y = coord.y ?? lastY;
+            const z = coord.z ?? lastZ;
+            
+            let currentColor;
+            if (coord.t === 1) {
+                currentColor = new THREE.Color(0xDB4B88);
+            } else if (coord.t === 2) {
+                currentColor = new THREE.Color(0x4B0082);
+            } else {
+                currentColor = new THREE.Color(0x00FF00);
+            }
+
+            const pointsToRender = coord.arcPoints || [{ x, y }];
+            
+            pointsToRender.forEach((pointData, pointIndex) => {
+                if (pointIndex === 0 && index > 0) {
+                    const px = lastY - buildPlateX / 2;
+                    const py = -lastX + buildPlateY / 2;
+                    const pz = z + Z_OFFSET;
+                    
+                    positions.push(px, py, pz);
+                    colors.push(currentColor.r, currentColor.g, currentColor.b);
+                    travelFlags.push(coord.t);
+                    
+                    // Add point data (set initial position to NaN for invisibility)
+                    pointPositions.push(NaN, NaN, NaN);
+                    originalPointPositions.push(px, py, pz);
+                    pointColors.push(currentColor.r, currentColor.g, currentColor.b);
+                    vertexToCoordMap.push(index);
+                }
+
+                const px = pointData.y - buildPlateX / 2;
+                const py = -pointData.x + buildPlateY / 2;
+                const pz = z + Z_OFFSET;
+                
+                positions.push(px, py, pz);
+                colors.push(currentColor.r, currentColor.g, currentColor.b);
+                travelFlags.push(coord.t);
+
+                // Add point data (set initial position to NaN for invisibility)
+                pointPositions.push(NaN, NaN, NaN);
+                originalPointPositions.push(px, py, pz);
+                pointColors.push(currentColor.r, currentColor.g, currentColor.b);
+                vertexToCoordMap.push(index);
+            });
+
+            lastX = x;
+            lastY = y;
+            lastZ = z;
+        });
+
+        // Setup line geometry
+        lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        lineGeometry.setAttribute('travel', new THREE.Float32BufferAttribute(travelFlags, 1));
+
+        // Setup point geometry with NaN positions initially
+        pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(pointPositions, 3));
+        pointGeometry.setAttribute('originalPosition', new THREE.Float32BufferAttribute(originalPointPositions, 3));
+        pointGeometry.setAttribute('color', new THREE.Float32BufferAttribute(pointColors, 3));
+
+        // Compute bounding sphere using original positions
+        const tempPositions = new Float32Array(originalPointPositions);
+        const tempGeometry = new THREE.BufferGeometry();
+        tempGeometry.setAttribute('position', new THREE.Float32BufferAttribute(tempPositions, 3));
+        tempGeometry.computeBoundingSphere();
+        pointGeometry.boundingSphere = tempGeometry.boundingSphere.clone();
+
+        const line = new THREE.Line(
+            lineGeometry,
+            new THREE.LineBasicMaterial({
+                vertexColors: true,
+                linewidth: 1,
+                transparent: true
+            })
+        );
+
+        const points = new THREE.Points(
+            pointGeometry,
+            new THREE.PointsMaterial({
+                size: POINT_SIZE,
+                sizeAttenuation: false,
+                vertexColors: true,
+                transparent: true,
+                depthWrite: false,
+                depthTest: false
+            })
+        );
+
+        points.renderOrder = 999;
+        points.userData.originalColors = new Float32Array(pointColors);
+        points.userData.vertexToCoordMap = vertexToCoordMap;
+
+        group.add(line);
+        group.add(points);
+
+        const existingGroup = scene.getObjectByName("allLines");
+        if (existingGroup) {
+            scene.remove(existingGroup);
+        }
+        
+        scene.add(group);
+        if (cube) {
+            cube.add(group);
+        }
+
+        renderer.render(scene, camera);
+    }
+}
+
+
+function handleFile(file) {
+    let startTime = performance.now();
+    is3DMode = false;
+    clearScene();
+    const reader = new FileReader();
+    var chunkSize = 1024 * 1024;
+    var offset = 0;
+    var content = '';
+
+    reader.onload = async function(e) {
+        content += e.target.result;
+        offset += e.target.result.length;
+
+        if (offset >= file.size) {
+            // File reading complete, start parsing
+            updateProgress("Parsing G-code", 0);
+            const gcodeLines = content.split('\n');
+            
+            // Parse G-code
+            updateProgress("Parsing G-code", 25);
+            coordinates = parseGcode(gcodeLines);
+            updateProgress("Parsing G-code", 50);
+            
+            // Switch to rendering model state
+            updateProgress("Rendering Model", 50);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Start rendering
+            drawCoordinates(coordinates);
+            
+            // Update render limit controls
+            document.getElementById('render-limit').max = coordinates.length - 1;
+            document.getElementById('render-limit').value = coordinates.length - 1;
+            document.getElementById('render-limit-display').value = coordinates.length - 1;
+
+            loadIntoEditor(content);
+            
+            updateProgress("Rendering Model", 100);
+            await new Promise(resolve => setTimeout(resolve, 250));
+            
+            let endTime = performance.now();
+            let totalTime = (endTime - startTime) / 1000;
+            document.querySelector('.current-line').textContent = `Model loaded in ${totalTime.toFixed(2)} seconds`;
+            renderer.render(scene, camera);
+        } else {
+            // Update progress during file reading
+            updateProgress("Reading File", Math.round((offset / file.size) * 25));
+            loadNextChunk();
+        }
+    };
+
+    function loadNextChunk() {
+        var slice = file.slice(offset, offset + chunkSize);
+        reader.readAsText(slice);
+    }
+
+    loadNextChunk();
+}
+
+
+function loadIntoEditor(content) {
+    // Temporarily remove change listener
+    const changeHandler = editor._handlers.change[0];
+    editor.off('change', changeHandler);
+    
+    // Set content and update padding
+    editor.setValue(content);
+    updatePadding();
+    editor.scrollTo(0, 0);
+    scrollThumb.style.top = '0px';
+    
+    // Restore change listener
+    editor.on('change', changeHandler);
+}
+
+
+
+////G2 and G3 Arc Print Moves////
+
+function calculateDistance(x1, y1, x2, y2) {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+// Helper function to calculate angle between two points
+function calculateAngle(x1, y1, x2, y2) {
+    return Math.atan2(y2 - y1, x2 - x1);
+}
+
+// Function to calculate points along an arc
+function calculateArcPoints(startX, startY, endX, endY, centerX, centerY, isClockwise, resolution = 20) {
+    const arcPoints = [];
+    
+    // Calculate radius
+    const radius = calculateDistance(centerX, centerY, startX, startY);
+    
+    // Calculate start and end angles
+    const startAngle = calculateAngle(centerX, centerY, startX, startY);
+    const endAngle = calculateAngle(centerX, centerY, endX, endY);
+    
+    // Adjust angles based on clockwise/counterclockwise
+    let angleDiff;
+    if (isClockwise) {
+        angleDiff = startAngle - endAngle;
+        if (angleDiff <= 0) angleDiff += 2 * Math.PI;
+    } else {
+        angleDiff = endAngle - startAngle;
+        if (angleDiff <= 0) angleDiff += 2 * Math.PI;
+    }
+    
+    // Generate intermediate points
+    for (let i = 0; i <= resolution; i++) {
+        const t = i / resolution;
+        const currentAngle = isClockwise 
+            ? startAngle - t * angleDiff 
+            : startAngle + t * angleDiff;
+        
+        const x = centerX + radius * Math.cos(currentAngle);
+        const y = centerY + radius * Math.sin(currentAngle);
+        
+        arcPoints.push({ x, y });
+    }
+    
+    return arcPoints;
+}
+
+function parseGcode(gcodeLines) {
+    let lastX = 0, lastY = 0, lastZ = 0, lastE = 0;
+    let isRelative = false;
+    let isRelativeExtrusion = false;
+    let totalExtrusion = 0;
+    let lastWasRetraction = false;
+    let currentFeedRate = 0;
+
+    const interval = Math.floor(gcodeLines.length / 4);
+
+    return gcodeLines.map((line, index) => {
+        let lineData = {
+            i: index,
+            originalLine: line.trim(),
+            hasCoordinates: false,
+            command: null,
+            x: lastX,
+            y: lastY,
+            z: lastZ,
+            e: null,
+            p: 0,
+            t: 0,
+            eTotal: totalExtrusion,
+            arcPoints: null,
+            isRelative: isRelative,
+            f: currentFeedRate
+        };
+
+        const cleanLine = line.trim().toUpperCase();
+        
+        if (cleanLine.startsWith(';') || cleanLine === '') {
+            return lineData;
+        }
+        
+        // Positioning mode commands
+        if (cleanLine.includes('G90')) {
+            isRelative = false;
+            lineData.isRelative = false;
+            return lineData;
+        }
+        if (cleanLine.includes('G91')) {
+            isRelative = true;
+            lineData.isRelative = true;
+            return lineData;
+        }
+        if (cleanLine.includes('M83')) {
+            isRelativeExtrusion = true;
+            return lineData;
+        }
+        if (cleanLine.includes('M82')) {
+            isRelativeExtrusion = false;
+            return lineData;
+        }
+
+        // Check for G-code commands with a space after G2, G3, G0, or G1
+        const commandMatch = cleanLine.match(/^G(0|1|2|3)\s/);
+        if (!commandMatch) {
+            // If no match, move to next line
+            return lineData;
+        }
+
+        lineData.command = 'G' + commandMatch[1];
+
+        // Parse coordinates and other parameters
+        const xMatch = cleanLine.match(/X([-+]?\d*\.?\d+)/);
+        const yMatch = cleanLine.match(/Y([-+]?\d*\.?\d+)/);
+        const zMatch = cleanLine.match(/Z([-+]?\d*\.?\d+)/);
+        const eMatch = cleanLine.match(/E([-+]?\d*\.?\d+)/);
+        const fMatch = cleanLine.match(/F([-+]?\d*\.?\d+)/);
+
+        // Update feed rate if specified
+        if (fMatch) {
+            currentFeedRate = parseFloat(fMatch[1]);
+            lineData.f = currentFeedRate;
+        }
+
+        // Arc parameters
+        const iMatch = cleanLine.match(/I([-+]?\d*\.?\d+)/);
+        const jMatch = cleanLine.match(/J([-+]?\d*\.?\d+)/);
+
+        // Check if new coordinates are present
+        const hasNewCoordinates = !!(xMatch || yMatch || zMatch);
+        lineData.hasCoordinates = hasNewCoordinates;
+
+        // Update coordinates with proper relative/absolute handling
+        if (xMatch || yMatch || zMatch) {
+            if (isRelative) {
+                // Relative positioning: add to last known position
+                lineData.x = lastX + (xMatch ? parseFloat(xMatch[1]) : 0);
+                lineData.y = lastY + (yMatch ? parseFloat(yMatch[1]) : 0);
+                lineData.z = lastZ + (zMatch ? parseFloat(zMatch[1]) : 0);
+            } else {
+                // Absolute positioning: use provided coordinates or last known position
+                lineData.x = xMatch ? parseFloat(xMatch[1]) : lastX;
+                lineData.y = yMatch ? parseFloat(yMatch[1]) : lastY;
+                lineData.z = zMatch ? parseFloat(zMatch[1]) : lastZ;
+            }
+        }
+
+        // Handle extrusion
+        if (eMatch) {
+            const eValue = parseFloat(eMatch[1]);
+            lineData.e = eValue;
+            
+            if (isRelativeExtrusion) {
+                // Relative extrusion: accumulate changes
+                if (eValue < 0) {
+                    lastWasRetraction = true;
+                } else if (eValue > 0) {
+                    lastWasRetraction = false;
+                }
+                totalExtrusion += eValue;
+            } else {
+                // Absolute extrusion: track total extrusion
+                if (eValue < totalExtrusion) {
+                    lastWasRetraction = true;
+                } else if (eValue > totalExtrusion) {
+                    lastWasRetraction = false;
+                }
+                totalExtrusion = eValue;
+            }
+            lineData.eTotal = totalExtrusion;
+        }
+
+        // Determine move type
+        if (lineData.command === 'G0') {
+            lineData.t = 1; // Travel move
+        } else if (['G1', 'G2', 'G3'].includes(lineData.command)) {
+            if (eMatch && lineData.e > 0) {
+                lineData.t = 0; // Printing move
+            } else {
+                lineData.t = 2; // Non-printing move
+            }
+        }
+
+        // Handle arc moves
+        if ((lineData.command === 'G2' || lineData.command === 'G3') && 
+            hasNewCoordinates && iMatch && jMatch) {
+            const isClockwise = lineData.command === 'G2';
+            const i = parseFloat(iMatch[1]);
+            const j = parseFloat(jMatch[1]);
+            
+            // For both absolute and relative, use last position to calculate center
+            const centerX = lastX + i;
+            const centerY = lastY + j;
+            
+            lineData.arcPoints = calculateArcPoints(
+                lastX, lastY,
+                lineData.x, lineData.y,
+                centerX, centerY,
+                isClockwise
+            );
+        }
+
+        // Update last known positions if new coordinates are present
+        if (hasNewCoordinates) {
+            lastX = lineData.x;
+            lastY = lineData.y;
+            lastZ = lineData.z;
+        }
+        
+        //Update progress during parsing
+        if (index % interval === 0) {
+            updateProgress("Parsing G-code", 25 + Math.floor((index / gcodeLines.length) * 25));
+        }
+
+        return lineData;
+    });
+}
+
+
+// Initialize default render limit to maximum
+renderLimitSlider.value = renderLimitSlider.max;
+
+
+
+function toggle3DMode() {
+    is3DMode = !is3DMode;
+    updateVisualizationFromEditor();
+    document.getElementById('toggle-3d').textContent = is3DMode ? '│' : '🔳';
+}
+
+document.getElementById('toggle-3d').addEventListener('click', toggle3DMode);
 
 
 
 
 
-//// Search Term Drop Down ////
+////// 3D Mesh Lines ///////
+function createIndex(numVertices) {
+    const index = [];
+    for (let i = 0; i < numVertices - 6; i += 6) {
+        // First triangle
+        index.push(i, i + 1, i + 2);
+        // Second triangle
+        index.push(i + 3, i + 4, i + 5);
+    }
+    return index;
+}
+
+function createMeshLineGeometry(start, end, color, thickness = 0.4, height = 0.2, isTravel = false) {
+    const positions = [];
+    
+    const startPoint = new THREE.Vector3(start.x, start.y, start.z + Z_OFFSET);
+    const endPoint = new THREE.Vector3(end.x, end.y, end.z + Z_OFFSET);
+    
+    if (startPoint.distanceTo(endPoint) > 0) {
+        if (isTravel) {
+            // For travel moves, create a thin line by using minimal thickness and height
+            const travelThickness = 0.2; // Much thinner
+            const direction = endPoint.clone().sub(startPoint);
+            let width;
+            
+            if (Math.abs(direction.z) > Math.abs(direction.x) && Math.abs(direction.z) > Math.abs(direction.y)) {
+                width = new THREE.Vector3(1, 0, 0).multiplyScalar(travelThickness);
+            } else {
+                direction.z = 0;
+                direction.normalize();
+                width = new THREE.Vector3(-direction.y, direction.x, 0).multiplyScalar(travelThickness);
+            }
+            
+            // Create just a single plane for travel moves
+            const v1 = startPoint.clone().add(width.clone().multiplyScalar(-0.5));
+            const v2 = startPoint.clone().add(width.clone().multiplyScalar(0.5));
+            const v3 = endPoint.clone().add(width.clone().multiplyScalar(-0.5));
+            const v4 = endPoint.clone().add(width.clone().multiplyScalar(0.5));
+
+            const vertices = [
+                v1, v2, v3, v2, v3, v4  // single plane
+            ];
+
+            vertices.forEach(v => positions.push(...v.toArray()));
+        } else {
+            // Original full 3D mesh for non-travel moves
+            const direction = endPoint.clone().sub(startPoint);
+            let width;
+            
+            if (Math.abs(direction.z) > Math.abs(direction.x) && Math.abs(direction.z) > Math.abs(direction.y)) {
+                width = new THREE.Vector3(1, 0, 0).multiplyScalar(thickness);
+            } else {
+                direction.z = 0;
+                direction.normalize();
+                width = new THREE.Vector3(-direction.y, direction.x, 0).multiplyScalar(thickness);
+            }
+            
+            const heightVec = new THREE.Vector3(0, 0, height);
+
+            const v1 = startPoint.clone().add(width.clone().multiplyScalar(-0.5)).add(heightVec.clone().multiplyScalar(-0.5));
+            const v2 = startPoint.clone().add(width.clone().multiplyScalar(0.5)).add(heightVec.clone().multiplyScalar(-0.5));
+            const v3 = startPoint.clone().add(width.clone().multiplyScalar(-0.5)).add(heightVec.clone().multiplyScalar(0.5));
+            const v4 = startPoint.clone().add(width.clone().multiplyScalar(0.5)).add(heightVec.clone().multiplyScalar(0.5));
+            const v5 = endPoint.clone().add(width.clone().multiplyScalar(-0.5)).add(heightVec.clone().multiplyScalar(-0.5));
+            const v6 = endPoint.clone().add(width.clone().multiplyScalar(0.5)).add(heightVec.clone().multiplyScalar(-0.5));
+            const v7 = endPoint.clone().add(width.clone().multiplyScalar(-0.5)).add(heightVec.clone().multiplyScalar(0.5));
+            const v8 = endPoint.clone().add(width.clone().multiplyScalar(0.5)).add(heightVec.clone().multiplyScalar(0.5));
+
+            const vertices = [
+                v1, v2, v5, v2, v5, v6,  // front
+                v3, v4, v7, v4, v7, v8,  // back
+                v1, v3, v5, v3, v5, v7,  // left
+                v2, v4, v6, v4, v6, v8,  // right
+                v1, v2, v3, v2, v3, v4,  // top
+                v5, v6, v7, v6, v7, v8   // bottom
+            ];
+
+            vertices.forEach(v => positions.push(...v.toArray()));
+        }
+    }
+
+    return positions;
+}
+
+function drawChunk(coordinates, lineNumbers, lineVisibilityMap, prevCoord, startIndex) {
+    const geometry = new THREE.BufferGeometry();
+    const positions = [];
+    const colors = [];
+    const travels = [];
+    const originalLineNumbers = [];
+    let lastCoord = prevCoord || { x: 0, y: 0, z: 0 };
+    const lineThickness = 0.4;
+    const meshHeight = 0.2;
+
+    coordinates.forEach((coord, index) => {
+        const isTravel = coord.t === 1 || coord.t === 2;
+        
+        if (coord.arcPoints) {
+            coord.arcPoints.forEach((point, arcIndex) => {
+                if (arcIndex === 0) return;
+
+                const start = {
+                    x: coord.arcPoints[arcIndex - 1].y - buildPlateX / 2,
+                    y: -coord.arcPoints[arcIndex - 1].x + buildPlateY / 2,
+                    z: (coord.z ?? lastCoord.z)
+                };
+
+                const end = {
+                    x: point.y - buildPlateX / 2,
+                    y: -point.x + buildPlateY / 2,
+                    z: (coord.z ?? lastCoord.z)
+                };
+
+                const segmentPositions = createMeshLineGeometry(start, end, coord.color || 0x00FF00, lineThickness, meshHeight, isTravel);
+                positions.push(...segmentPositions);
+
+                const color = coord.t === 1 ? new THREE.Color(0xDB4B88) :
+                            coord.t === 2 ? new THREE.Color(0x4B0082) :
+                            new THREE.Color(0x00FF00);
+
+                for (let i = 0; i < segmentPositions.length / 3; i++) {
+                    colors.push(color.r, color.g, color.b);
+                    travels.push(coord.t || 0);
+                    originalLineNumbers.push(lineNumbers[index]);
+                }
+            });
+            lastCoord = { 
+                x: coord.arcPoints[coord.arcPoints.length - 1].x,
+                y: coord.arcPoints[coord.arcPoints.length - 1].y,
+                z: coord.z ?? lastCoord.z 
+            };
+        } else {
+            const start = {
+                x: lastCoord.y - buildPlateX / 2,
+                y: -lastCoord.x + buildPlateY / 2,
+                z: lastCoord.z
+            };
+
+            const end = {
+                x: coord.y - buildPlateX / 2,
+                y: -coord.x + buildPlateY / 2,
+                z: (coord.z ?? lastCoord.z)
+            };
+
+            const segmentPositions = createMeshLineGeometry(start, end, coord.color || 0x00FF00, lineThickness, meshHeight, isTravel);
+            positions.push(...segmentPositions);
+
+            const color = coord.t === 1 ? new THREE.Color(0xDB4B88) :
+                        coord.t === 2 ? new THREE.Color(0x4B0082) :
+                        new THREE.Color(0x00FF00);
+
+            for (let i = 0; i < segmentPositions.length / 3; i++) {
+                colors.push(color.r, color.g, color.b);
+                travels.push(coord.t || 0);
+                originalLineNumbers.push(lineNumbers[index]);
+            }
+
+            if (coord.z !== undefined && Math.abs(coord.z - lastCoord.z) > 0.001) {
+                const zStart = { ...start, z: lastCoord.z };
+                const zEnd = { ...start, z: coord.z };
+                const zSegmentPositions = createMeshLineGeometry(zStart, zEnd, 0xDB4B88, lineThickness, meshHeight, true); // Always treat Z movements as travel
+                positions.push(...zSegmentPositions);
+
+                for (let i = 0; i < zSegmentPositions.length / 3; i++) {
+                    colors.push(0xDB / 255, 0x4B / 255, 0x88 / 255);
+                    travels.push(1);
+                    originalLineNumbers.push(lineNumbers[index]);
+                }
+            }
+            
+            lastCoord = coord;
+        }
+    });
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('originalPosition', new THREE.Float32BufferAttribute(positions.slice(), 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('travel', new THREE.Float32BufferAttribute(travels, 1));
+    geometry.setAttribute('lineNumber', new THREE.Float32BufferAttribute(originalLineNumbers, 1));
+    geometry.setIndex(new THREE.Uint32BufferAttribute(createIndex(positions.length / 3), 1));
+
+    const material = new THREE.MeshPhongMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+        shininess: 30,
+        flatShading: true
+    });
+    
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.lineVisibilityMap = lineVisibilityMap;
+    
+    return mesh;
+}
+
+
+
+/// updateVisibleLines runs every scroll position
+function updateVisibleLines(scrollTop, renderLimit) {
+
+    if (is3DMode) {
+
+        const currentEditorLine = Math.floor(scrollTop / lineHeight) + 1;
+
+        const group = scene.getObjectByName("allLines");
+        if (!group) return;
+
+        group.children.forEach(mesh => {
+            if (!mesh.geometry || !mesh.geometry.attributes) return;
+            
+            const positions = mesh.geometry.attributes.position?.array;
+            const originalPositions = mesh.geometry.attributes.originalPosition?.array;
+            const lineNumbers = mesh.geometry.attributes.lineNumber?.array;
+            const lineVisibilityMap = mesh.userData.lineVisibilityMap;
+
+            if (!positions || !originalPositions || !lineNumbers || !lineVisibilityMap) return;
+
+            for (let i = 0; i < positions.length; i++) {
+                positions[i] = NaN;
+            }
+
+            const startLineNumber = Math.max(0, currentEditorLine - renderLimit + 1);
+            
+            for (let vertexIndex = 0; vertexIndex < lineNumbers.length; vertexIndex++) {
+                const lineNumber = lineNumbers[vertexIndex];
+                const coordIndex = lineVisibilityMap.get(lineNumber);
+                
+                if (coordIndex >= startLineNumber && coordIndex <= currentEditorLine) {
+                    const baseIndex = vertexIndex * 3;
+                    const moveType = mesh.geometry.attributes.travel.array[vertexIndex];
+
+                    if (travelLinesVisible || moveType === 0) {
+                        positions[baseIndex] = originalPositions[baseIndex];
+                        positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+                        positions[baseIndex + 2] = originalPositions[baseIndex + 2];
+                    }
+                }
+            }
+
+            mesh.geometry.attributes.position.needsUpdate = true;
+        });
+
+        if (nozzle && coordinates[currentEditorLine]) {
+            const nozzleCoord = coordinates[currentEditorLine];
+            if (nozzleCoord) {
+                nozzle.position.set(
+                    nozzleCoord.y - buildPlateX / 2,
+                    -nozzleCoord.x + buildPlateY / 2,
+                    nozzleCoord.z + 5
+                );
+            }
+        }
+
+        renderer.render(scene, camera);
+
+
+    } else {
+
+       const currentEditorLine = Math.floor(scrollTop / lineHeight) + 1;
+        const group = scene.getObjectByName("allLines");
+        if (!group) return;
+
+        const line = group.children[0];
+        const points = group.children[1];
+        if (!line || !points) return;
+
+        // Get line attributes
+        const lineGeometry = line.geometry;
+        const positions = lineGeometry.attributes.position.array;
+        if (!lineGeometry.attributes.originalPosition) {
+            lineGeometry.setAttribute('originalPosition', 
+                new THREE.Float32BufferAttribute(positions.slice(), 3));
+        }
+        const originalPositions = lineGeometry.attributes.originalPosition.array;
+        const travelAttribute = lineGeometry.attributes.travel;
+
+        // Reset positions to NaN
+        for (let i = 0; i < positions.length; i++) {
+            positions[i] = NaN;
+        }
+
+        // Get point attributes
+        const pointGeometry = points.geometry;
+        const pointPositions = pointGeometry.attributes.position.array;
+        const pointOriginalPositions = pointGeometry.attributes.originalPosition.array;
+        const vertexToCoordMap = points.userData.vertexToCoordMap;
+
+        // Reset all points to NaN
+        for (let i = 0; i < pointPositions.length; i++) {
+            pointPositions[i] = NaN;
+        }
+
+        const currentCoordIndex = currentEditorLine;
+        
+        if (currentCoordIndex >= 0 && currentCoordIndex < coordinates.length) {
+            const startCoordIndex = Math.max(0, currentCoordIndex - renderLimit + 1);
+            
+            for (let vertexIndex = 0; vertexIndex < vertexToCoordMap.length; vertexIndex++) {
+                const coordIndex = vertexToCoordMap[vertexIndex];
+                if (coordIndex >= startCoordIndex && coordIndex <= currentCoordIndex) {
+                    const baseIndex = vertexIndex * 3;
+                    const moveType = travelAttribute.array[vertexIndex];
+                    
+                    if (travelLinesVisible || moveType === 0) {
+                        positions[baseIndex] = originalPositions[baseIndex];
+                        positions[baseIndex + 1] = originalPositions[baseIndex + 1];
+                        positions[baseIndex + 2] = originalPositions[baseIndex + 2];
+                    }
+                }
+            }
+
+            if (nozzle && coordinates[currentCoordIndex]) {
+                const nozzleCoord = coordinates[currentCoordIndex];
+                nozzle.position.set(
+                    nozzleCoord.y - buildPlateX / 2,
+                    -nozzleCoord.x + buildPlateY / 2,
+                    nozzleCoord.z + Z_OFFSET + 5
+                );
+            }
+        }
+
+        lineGeometry.attributes.position.needsUpdate = true;
+        pointGeometry.attributes.position.needsUpdate = true;
+        renderer.render(scene, camera);
+    }
+}
+
+
+
+function updateVisualizationFromEditor() {
+
+    const content = editor.getValue();
+    const currentScrollTop = editor.getScrollInfo().top;
+    const currentRenderLimit = parseInt(renderLimitDisplay.value) || 200;
+    
+    // Common code for both modes
+    coordinates = parseGcode(content.split('\n'));
+
+    const oldLine = scene.getObjectByName("allLines");
+    if (oldLine) {
+        scene.remove(oldLine);
+        if (cube) cube.remove(oldLine);
+        
+        if (oldLine.geometry) {
+            oldLine.geometry.dispose();
+        }
+        
+        // Ensure material exists before disposing
+        if (oldLine.material) {
+            if (Array.isArray(oldLine.material)) {
+                oldLine.material.forEach(mat => mat && mat.dispose());
+            } else {
+                oldLine.material.dispose();
+            }
+        }
+    }
+
+    drawCoordinates(coordinates);
+    renderLimitSlider.max = coordinates.length - 1;
+    renderLimitSlider.value = Math.min(currentRenderLimit, coordinates.length - 1);
+    renderLimitDisplay.value = renderLimitSlider.value;
+
+    if (is3DMode) {
+        updateVisibleLines(currentScrollTop, parseInt(renderLimitDisplay.value), coordinates);
+    } else {
+        updateVisibleLines(currentScrollTop, parseInt(renderLimitDisplay.value));
+    }
+    
+    const topLine = Math.floor(currentScrollTop / lineHeight);
+    updateInfoPanel(topLine);
+}
+
+
+
+
+
+
+// Add render limit event listeners
+renderLimitSlider.addEventListener('input', function(e) {
+    const value = parseInt(e.target.value);
+    renderLimitDisplay.value = value;
+    const scrollInfo = editor.getScrollInfo();
+    updateVisibleLines(scrollInfo.top, value);
+});
+
+renderLimitDisplay.addEventListener('change', function(e) {
+    const value = parseInt(e.target.value);
+    renderLimitSlider.value = value;
+    const scrollInfo = editor.getScrollInfo();
+    updateVisibleLines(scrollInfo.top, value);
+});
+
+
+
+
+
+function clearScene() {
+    // Remove the line object from the scene
+    const line = scene.getObjectByName("allLines");
+    if (line) {
+        scene.remove(line);
+        // If the line was added to cube, remove it from there too
+        if (cube) {
+            cube.remove(line);
+        }
+        // Dispose of the geometry and materials to free up memory
+        if (line.geometry) {
+            line.geometry.dispose();
+        }
+        if (line.material) {
+            if (Array.isArray(line.material)) {
+                for (let mat of line.material) {
+                    mat.dispose();
+                }
+            } else {
+                line.material.dispose();
+            }
+        }
+    }
+
+    // Reset the coordinates array
+    coordinates = [];
+
+    // Reset visibility flags and line index
+    lastVisibleLine = -1;
+    travelLinesVisible = true;
+    is3DMode = false; // Reset 3D mode if applicable
+
+    // Reset render limit controls
+    const renderLimitSlider = document.getElementById('render-limit');
+    const renderLimitDisplay = document.getElementById('render-limit-display');
+    renderLimitSlider.value = renderLimitSlider.min;
+    renderLimitDisplay.value = renderLimitSlider.min;
+
+    // Clear the CodeMirror editor
+    const changeHandler = editor._handlers.change[0];
+    editor.off('change', changeHandler);
+    editor.setValue(''); // Clear the content
+    editor.on('change', changeHandler); // Reattach the change listener
+
+    // Reset editor scroll position
+    editor.scrollTo(0, 0);
+
+    // Reset other global variables
+    allLineSegments = [];
+    currentPosition = { x: 0, y: 0, z: 0, e: 0 };
+    isRelativeE = false;
+    lineCount = 0;
+    thickLines = false;
+    currentStepIndex = 0;
+    currentZHeight = 0;
+    angleX = 0; 
+    angleY = 0; 
+    angleZ = 0;
+    positionX = 0; 
+    positionY = 0;
+    zoom = 0.5;
+    sceneChanged = false;
+    isRelative = false;
+
+    // Reset UI elements to default state
+    document.querySelector('.current-line').textContent = 'Welcome to gcoder';
+    document.getElementById('z-height').textContent = '0.00';
+    document.getElementById('pos-mode').textContent = 'Absolute';
+    document.getElementById('e-total').textContent = '0.00';
+    document.getElementById('feed-rate').textContent = '0';
+
+    // Update scene visualization
+    renderer.render(scene, camera);
+}
+
+// Clear screen button listener
+document.getElementById('clear-display').addEventListener('click', function() {
+    clearScene();
+});
+
+
+
+
+
+
+/////////////////TEXT EDITOR/////////////////////////// 
+var editor, scrollThumb, resizeHandle, editorContainer;
+var lineHeight = 15; 
+
+function updatePadding() {
+    let viewportLines = Math.floor(editorContainer.clientHeight / lineHeight);
+    let paddingLines = viewportLines - 1; 
+    let content = editor.getValue();
+    let padding = "\n".repeat(paddingLines);
+    if (!content.endsWith(padding)) {
+        editor.setValue(content.trimEnd() + padding);
+    }
+}
+
+function initEditor() {
+    editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+        lineNumbers: true,
+        mode: "gcode",
+        theme: "monokai",
+        viewportMargin: 10,
+        lineWrapping: false,
+        styleActiveLine: false,
+        styleSelectedText: false,
+        scrollbarStyle: "null"
+    });
+
+    scrollThumb = document.getElementById("scroll-thumb");
+    editorContainer = document.getElementById("editor-container");
+    resizeHandle = document.getElementById("resize-handle");
+    
+
+    // Align scroll position to whole line height
+    function snapScrollToLineHeight() {
+        let scrollInfo = editor.getScrollInfo();
+        let currentScroll = scrollInfo.top;
+        let maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+
+        if (currentScroll >= maxScroll) {
+            // Snap to the last full line
+            editor.scrollTo(null, Math.floor(maxScroll / lineHeight) * lineHeight);
+        } else {
+            // Snap to the nearest line
+            editor.scrollTo(null, Math.round(currentScroll / lineHeight) * lineHeight);
+        }
+    }
+
+
+    // Scroll thumb behavior
+    scrollThumb.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        let startY = e.clientY;
+        let startThumbTop = parseInt(getComputedStyle(scrollThumb).top);
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        function onMouseMove(e) {
+            let deltaY = e.clientY - startY;
+            let newTop = Math.max(0, Math.min(startThumbTop + deltaY, editorContainer.clientHeight - scrollThumb.clientHeight));
+            scrollThumb.style.top = newTop + 'px';
+
+            let lineCount = editor.lineCount();
+            let thumbPosition = newTop / (editorContainer.clientHeight - scrollThumb.clientHeight);
+            let scrollToLine = Math.round(thumbPosition * lineCount);
+            editor.scrollTo(null, lineHeight * scrollToLine);
+            
+            updateInfoPanel(scrollToLine);
+            
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            snapScrollToLineHeight(); // Ensure alignment after dragging
+        }
+    });
+    
+    
+    
+    // Resize handle for editor pane
+    resizeHandle.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        let startX = e.clientX;
+        let startWidth = parseInt(getComputedStyle(editorContainer).width);
+
+        document.addEventListener('mousemove', onResizeMove);
+        document.addEventListener('mouseup', onResizeUp);
+
+        function onResizeMove(e) {
+            let newWidth = startWidth - (e.clientX - startX);
+            editorContainer.style.width = Math.min(Math.max(200, newWidth), window.innerWidth - 50) + 'px';
+        }
+
+        function onResizeUp() {
+            document.removeEventListener('mousemove', onResizeMove);
+            document.removeEventListener('mouseup', onResizeUp);
+        }
+    });
+    
+    
+    editor.on('change', function(cm, change) {
+        // Debounce the update to prevent excessive rebuilding
+        clearTimeout(editor.updateTimeout);
+        editor.updateTimeout = setTimeout(() => {
+            updateVisualizationFromEditor();
+        }, 300); // Wait 300ms after last change
+    });
+
+    
+    
+
+    document.addEventListener('keydown', function (e) {
+        if (document.activeElement !== editor.getWrapperElement()) {
+            if (e.shiftKey) {
+                // Handle search navigation with Shift + Arrow keys
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevResult();
+                    // Update scroll thumb position
+                    const scrollInfo = editor.getScrollInfo();
+                    const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+                    const scrollRatio = scrollInfo.top / maxScroll;
+                    const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+                    scrollThumb.style.top = `${newThumbTop}px`;
+                    // Update the info panel
+                    const currentLine = Math.floor(scrollInfo.top / lineHeight);
+                    updateInfoPanel(currentLine);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    nextResult();
+                    // Update scroll thumb position
+                    const scrollInfo = editor.getScrollInfo();
+                    const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+                    const scrollRatio = scrollInfo.top / maxScroll;
+                    const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+                    scrollThumb.style.top = `${newThumbTop}px`;
+                    // Update the info panel
+                    const currentLine = Math.floor(scrollInfo.top / lineHeight);
+                    updateInfoPanel(currentLine);
+                }
+            } else {
+                // Regular arrow key scrolling
+                let scrollInfo = editor.getScrollInfo();
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    let newScroll = Math.max(0, scrollInfo.top - lineHeight);
+                    editor.scrollTo(null, newScroll);
+                    snapScrollToLineHeight();
+                    // Update scroll thumb position
+                    const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+                    const scrollRatio = newScroll / maxScroll;
+                    const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+                    scrollThumb.style.top = `${newThumbTop}px`;
+                    // Update the info panel
+                    const currentLine = Math.floor(newScroll / lineHeight);
+                    updateInfoPanel(currentLine);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let newScroll = scrollInfo.top + lineHeight;
+                    editor.scrollTo(null, newScroll);
+                    snapScrollToLineHeight();
+                    // Update scroll thumb position
+                    const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+                    const scrollRatio = newScroll / maxScroll;
+                    const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+                    scrollThumb.style.top = `${newThumbTop}px`;
+                    // Update the info panel
+                    const currentLine = Math.floor(newScroll / lineHeight);
+                    updateInfoPanel(currentLine);
+                }
+            }
+        }
+    });
+
+
+    // Ensure alignment on manual scroll
+    editor.on('scroll', function() {
+        const scrollInfo = editor.getScrollInfo();
+        const topLine = Math.floor(scrollInfo.top / lineHeight);
+        const renderLimitValue = parseInt(renderLimitDisplay.value) || 200;
+        updateVisibleLines(scrollInfo.top, renderLimitValue);
+        
+        // Original line content logging
+        let lineContent = editor.getLine(topLine + 1);
+        updateInfoPanel(topLine); 
+    });
+
+    // Update the wheel event handler to sync scroll thumb
+    editor.getWrapperElement().addEventListener('wheel', function(e) {
+        e.preventDefault();
+        let currentScroll = editor.getScrollInfo().top;
+        let newScroll = currentScroll + (e.deltaY > 0 ? lineHeight : -lineHeight);
+        editor.scrollTo(null, newScroll);
+        snapScrollToLineHeight();
+
+        // Update scroll thumb position
+        const maxScroll = editor.getScrollInfo().height - editor.getScrollInfo().clientHeight;
+        const scrollRatio = newScroll / maxScroll;
+        const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+        scrollThumb.style.top = `${newThumbTop}px`;
+
+        // Add this line to update the info panel
+        const topLine = Math.floor(newScroll / lineHeight);
+        updateInfoPanel(topLine);
+    }); 
+    
+
+    // Add touch support for resize handle
+    resizeHandle.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        let startX = touch.clientX;
+        let startWidth = parseInt(getComputedStyle(editorContainer).width);
+
+        function onTouchMove(e) {
+            const touch = e.touches[0];
+            let newWidth = startWidth - (touch.clientX - startX);
+            editorContainer.style.width = Math.min(Math.max(200, newWidth), window.innerWidth - 50) + 'px';
+            
+            const lineCount = editor.lineCount();
+            const thumbPosition = parseInt(scrollThumb.style.top) / (editorContainer.clientHeight - scrollThumb.clientHeight);
+            const scrollToLine = Math.round(thumbPosition * lineCount);
+            editor.scrollTo(null, lineHeight * scrollToLine);
+            // Add this:
+            updateInfoPanel(scrollToLine);      
+            
+        }
+
+        function onTouchEnd() {
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+        }
+
+        document.addEventListener('touchmove', onTouchMove);
+        document.addEventListener('touchend', onTouchEnd);
+    });
+
+
+
+    // Initial setup
+    updatePadding();
+    snapScrollToLineHeight();
+}
+
+
+
+
+
+/// TOUCH EVENT LISTENERS ///
+document.addEventListener('DOMContentLoaded', function () {
+
+    initEditor();
+    initializeSearch();
+    
+    let touchLastY = 0;
+    let lastTouchTime = 0;
+    let velocity = 0;
+    let velocityHistory = [];
+    const VELOCITY_HISTORY_SIZE = 5;
+    const DECELERATION = 0.985;
+    const MIN_VELOCITY = 0.01;
+    const VELOCITY_SCALE = 8.0;
+    const TAP_THRESHOLD = 10;
+    const TAP_TIMEOUT = 200;
+
+    scrollThumb.addEventListener('touchstart', onTouchStart);
+    scrollThumb.addEventListener('touchmove', onTouchMove);
+    scrollThumb.addEventListener('touchend', onTouchEnd);
+
+    editor.getWrapperElement().addEventListener('touchstart', onTouchStart);
+    editor.getWrapperElement().addEventListener('touchmove', onTouchMove);
+    editor.getWrapperElement().addEventListener('touchend', onTouchEnd);
+
+    function onTouchStart(e) {
+        e.preventDefault();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = performance.now();
+        touchLastY = e.touches[0].clientY;
+        lastTouchTime = performance.now();
+        velocity = 0;
+        velocityHistory = [];
+        cancelAnimationFrame(momentumRAF);
+    }
+
+    function onTouchMove(e) {
+        e.preventDefault();
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+        const deltaX = Math.abs(currentX - touchStartX);
+        const deltaY = Math.abs(currentY - touchStartY);
+
+        // If we've moved more than the threshold, mark it as a scroll
+        if (deltaX > TAP_THRESHOLD || deltaY > TAP_THRESHOLD) {
+            touchStartTime = 0; // Clear the tap timer
+        }
+
+        // Original scroll logic
+        const currentTime = performance.now();
+        const touchDeltaY = currentY - touchLastY;
+        const deltaTime = currentTime - lastTouchTime;
+
+        if (deltaTime > 0) {
+            const currentVelocity = -(touchDeltaY / deltaTime) * VELOCITY_SCALE;
+            velocityHistory.push(currentVelocity);
+            if (velocityHistory.length > VELOCITY_HISTORY_SIZE) {
+                velocityHistory.shift();
+            }
+            velocity = velocityHistory.reduce((sum, v) => sum + v, 0) / velocityHistory.length;
+        }
+
+        if (e.target === scrollThumb) {
+            // Original scrollbar logic...
+            const newTop = parseInt(getComputedStyle(scrollThumb).top) + touchDeltaY;
+            scrollThumb.style.top = `${Math.max(0, Math.min(newTop, editorContainer.clientHeight - scrollThumb.clientHeight))}px`;
+
+            const lineCount = editor.lineCount();
+            const thumbPosition = parseInt(scrollThumb.style.top) / (editorContainer.clientHeight - scrollThumb.clientHeight);
+            const scrollToLine = Math.round(thumbPosition * lineCount);
+            editor.scrollTo(null, lineHeight * scrollToLine);
+        } else {
+            // Original text area scroll...
+            const currentScroll = editor.getScrollInfo().top;
+            const newScroll = currentScroll - touchDeltaY;
+            editor.scrollTo(null, newScroll);
+
+            // Update scroll thumb position
+            const maxScroll = editor.getScrollInfo().height - editor.getScrollInfo().clientHeight;
+            const scrollRatio = newScroll / maxScroll;
+            const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+            scrollThumb.style.top = `${newThumbTop}px`;
+        }
+
+        touchLastY = currentY;
+        lastTouchTime = currentTime;
+    }
+
+    function onTouchEnd(e) {
+        e.preventDefault();
+        const touchEndTime = performance.now();
+        const touchDuration = touchEndTime - touchStartTime;
+
+        // If it was a short tap without much movement, handle as cursor positioning
+        if (touchDuration < TAP_TIMEOUT && touchStartTime !== 0) {
+            const targetElem = document.elementFromPoint(touchStartX, touchStartY);
+            if (targetElem && !targetElem.classList.contains('CodeMirror-gutter') && 
+                !targetElem.classList.contains('CodeMirror-gutters')) {
+                // Convert touch coordinates to editor position
+                const pos = editor.coordsChar({
+                    left: touchStartX,
+                    top: touchStartY
+                });
+                editor.setCursor(pos);
+                editor.focus();
+                return;
+            }
+        }
+
+        //Momentum scroll logic
+        velocity = velocityHistory.length > 0 ? 
+            velocityHistory.reduce((sum, v) => sum + v, 0) / velocityHistory.length :
+            0;
+
+        const animate = () => {
+            if (Math.abs(velocity) > MIN_VELOCITY) {
+                velocity *= DECELERATION;
+
+                if (e.target === scrollThumb) {
+                    const newTop = parseInt(getComputedStyle(scrollThumb).top) - velocity;
+                    const boundedTop = Math.max(0, Math.min(newTop, editorContainer.clientHeight - scrollThumb.clientHeight));
+                    scrollThumb.style.top = `${boundedTop}px`;
+
+                    const lineCount = editor.lineCount();
+                    const thumbPosition = boundedTop / (editorContainer.clientHeight - scrollThumb.clientHeight);
+                    const scrollToLine = Math.round(thumbPosition * lineCount);
+                    editor.scrollTo(null, lineHeight * scrollToLine);
+                } else {
+                    const currentScroll = editor.getScrollInfo().top;
+                    const maxScroll = editor.getScrollInfo().height - editor.getScrollInfo().clientHeight;
+                    const newScroll = Math.min(Math.max(0, currentScroll + velocity), maxScroll);
+                    
+                    if (newScroll === 0 || newScroll === maxScroll) {
+                        velocity = 0;
+                    } else {
+                        editor.scrollTo(null, newScroll);
+                        
+                        // Update scroll thumb position
+                        const scrollRatio = newScroll / maxScroll;
+                        const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+                        scrollThumb.style.top = `${newThumbTop}px`;
+                    }
+                }
+                
+                momentumRAF = requestAnimationFrame(animate);
+            }
+        };
+
+        momentumRAF = requestAnimationFrame(animate);
+    }
+
+
+    document.getElementById('toggle-travel-lines').addEventListener('click', function () {
+        travelLinesVisible = !travelLinesVisible;
+        const scrollInfo = editor.getScrollInfo();
+        const topLine = Math.floor(scrollInfo.top / lineHeight);
+        const renderLimitValue = parseInt(renderLimitDisplay.value) || 200;
+        updateVisibleLines(scrollInfo.top, renderLimitValue);
+        console.log(`Travel lines are now ${travelLinesVisible ? 'visible' : 'hidden'}`);
+    }); 
+
+    document.getElementById('load-file-button').addEventListener('click', function () {
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.gcode,.txt';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+        fileInput.click();
+
+        fileInput.addEventListener('change', function (e) {
+            var file = e.target.files[0];
+            if (file) {
+                handleFile(file); // Pass file Blob to handleFile
+            }
+        });
+    });
+});
+
+
+
+
+
+//// Search ////
 const commonSearchTerms = [
     { term: ';LAYER:', description: '(Marlin, Cura)' },
     { term: '; CHANGE_LAYER', description: '(Bambu Studio)' },
@@ -771,7 +2452,7 @@ function showSearchOptions() {
 
     const rect = searchInput.getBoundingClientRect();
     const windowHeight = window.innerHeight;
-    const maxDropdownHeight = Math.min(600, windowHeight - rect.bottom - 10); // 300 is an example max height
+    const maxDropdownHeight = Math.min(600, windowHeight - rect.bottom - 10);
 
 
     searchOptionsDiv.style.left = `${rect.left}px`;
@@ -786,7 +2467,7 @@ function showSearchOptions() {
     searchOptionsDiv.style.width = Math.min(maxWidth + 20, window.innerWidth - 20) + 'px';
 
     if (rect.bottom + searchOptionsDiv.offsetHeight > windowHeight) {
-        searchOptionsDiv.style.top = `${rect.top - searchOptionsDiv.offsetHeight}px`; // Position above if it would go off-screen
+        searchOptionsDiv.style.top = `${rect.top - searchOptionsDiv.offsetHeight}px`;
     }
 }
 
@@ -807,510 +2488,187 @@ document.addEventListener('click', () => {
     }
 });
 
-//// End Search Term Drop Down ////
 
 
+let searchInitialized = false;
+let searchResults = [];
+let currentSearchIndex = -1;
 
+function goToLine(line) {
+    editor.scrollTo(null, (line - 1) * lineHeight);
+    updateInfoPanel(line);
+    
+    // Update scroll thumb position
+    const scrollInfo = editor.getScrollInfo();
+    const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+    const scrollRatio = scrollInfo.top / maxScroll;
+    const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+    scrollThumb.style.top = `${newThumbTop}px`;
+}
 
+function nextResult() {
+    if (searchResults.length === 0) return;
+    currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+    goToLine(searchResults[currentSearchIndex]);
+}
 
+function prevResult() {
+    if (searchResults.length === 0) return;
+    currentSearchIndex = (currentSearchIndex - 1 + searchResults.length) % searchResults.length;
+    goToLine(searchResults[currentSearchIndex]);
+}
 
-//// Input Event Listener ////
-document.getElementById('codeInput').addEventListener('input', function(event) {
-    const currentSliderValue = parseInt(renderLimitSlider.value, 10);
+function initializeSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const nextButton = document.getElementById('nextResult');
+    const prevButton = document.getElementById('prevResult');
 
-    if (lineCount <= 30000) {
-        parseGCode(this.value);      
+    if (!searchInput || !nextButton || !prevButton) {
+        console.error("Search elements not found");
+        return;
     }
 
-    renderLimitSlider.value = Math.min(currentSliderValue, renderLimitSlider.max);
-    renderLimitDisplay.value = renderLimitSlider.value;
-    sliceLimit = parseInt(renderLimitSlider.value, 10);
-    updateCurrentLine();
-    
-});
+    function performSearch() {
+        searchResults = [];
+        currentSearchIndex = -1;
+        const searchTerm = searchInput.value.trim();
+        
+        if (!searchTerm) return;
 
+        const scrollInfo = editor.getScrollInfo();
+        const currentTopLine = Math.floor(scrollInfo.top / lineHeight);
+        const totalLines = editor.lineCount();
 
+        for (let i = 0; i < totalLines; i++) {
+            let lineContent = editor.getLine(i);
+            if (lineContent.includes(searchTerm)) {
+                searchResults.push(i);
+            }
+        }
 
-
-
-//// Update Button if over 30k lines ////
-function showUpdateButton() {
-    document.getElementById('update-gcode-button').style.display = 'block';
-}
-
-function hideUpdateButton() {
-    document.getElementById('update-gcode-button').style.display = 'none';
-}
-document.getElementById('update-gcode-button').addEventListener('click', function() {
-    parseGCode(document.getElementById('codeInput').value);
-});
-
-
-
-
-
-
-
-//// Shift key selecting fix ////
-document.head.insertAdjacentHTML('beforeend', 
-  '<style>' +
-    '.no-select {' +
-    '  -webkit-user-select: none;' +
-    '  -moz-user-select: none;' +
-    '  -ms-user-select: none;' +
-    '  user-select: none;' +
-    '}' +
-  '</style>'
-);
-document.addEventListener('keydown', function(e) {
-  if (e.shiftKey) {
-    document.body.classList.add('no-select');
-  }
-});
-
-document.addEventListener('keyup', function(e) {
-  if (!e.shiftKey) {
-    document.body.classList.remove('no-select');
-  }
-});
-
-
-
-
-
-
-
-//// Keyboard keyboard on touch devices ////
-function hideKeyboard() {
-    var input = document.createElement('input');
-    input.setAttribute('type', 'text');
-    document.body.appendChild(input);
-    input.focus();
-    setTimeout(function() {
-        input.blur();
-        document.body.removeChild(input);
-    }, 100);
-}
-
-function isTextInputElement(element) {
-    return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA';
-}
-
-document.addEventListener('click', manageKeyboard);
-document.addEventListener('touchstart', manageKeyboard);
-
-function manageKeyboard(event) {
-    const target = event.target;
-
-    // If the user clicks/touches outside any text input, hide the keyboard
-    if (!isTextInputElement(target)) {
-        hideKeyboard();
-    } else {
-        if (event.type === 'touchstart') {
-            event.stopPropagation();
+        if (searchResults.length > 0) {
+            const startIndex = searchResults.findIndex(line => line >= currentTopLine);
+            currentSearchIndex = startIndex !== -1 ? startIndex : 0;
+            goToLine(searchResults[currentSearchIndex]);
         }
     }
-}
-document.addEventListener('click', function(event) {
-    if (!isTextInputElement(event.target)) {
-        document.activeElement.blur();
-    }
-});
-document.addEventListener('touchstart', function(event) {
-    if (!isTextInputElement(event.target)) {
-        document.activeElement.blur();
-    }
-});
 
+    searchInput.addEventListener('input', performSearch);
+    nextButton.addEventListener('click', nextResult);
+    prevButton.addEventListener('click', prevResult);
 
-
-
-
-
-
-
-//// Toggle thick lines ////
-document.getElementById('toggle-thick-lines').addEventListener('click', function() {
-    // Save the current slider position
-    const currentSliderValue = parseInt(renderLimitSlider.value, 10);
-    thickLines = !thickLines;
-    this.textContent = thickLines ? "│" : "║";
-    parseGCode(document.getElementById('codeInput').value);
-    renderLimitSlider.value = Math.min(currentSliderValue, renderLimitSlider.max); // Ensure it doesn't exceed the new max
-    renderLimitDisplay.value = renderLimitSlider.value;
-    sliceLimit = parseInt(renderLimitSlider.value, 10);
-    updateCurrentLine();
-});
-
-
-
-
-//// Toggle travel lines ////
-document.getElementById('toggle-travel-lines').addEventListener('click', () => {
-    showTravelLines = !showTravelLines;
-    updateCurrentLine(); // Re-evaluate visibility based on new setting
-});
-
-//// Render limit slider and display/input ////
-renderLimitSlider.addEventListener('input', function () {
-    sliceLimit = parseInt(this.value, 10);
-    renderLimitDisplay.value = sliceLimit;
-    updateCurrentLine();
-});
-renderLimitDisplay.addEventListener('input', function () {
-    let value = parseInt(this.value, 10);
-    value = Math.max(1, Math.min(renderLimitSlider.max, value));
-    sliceLimit = value;
-    renderLimitSlider.value = value;
-    updateCurrentLine();
-});
-
-
-// Handle scrolling of G-code input
-['wheel', 'scroll'].forEach(event => {
-    document.getElementById('codeInput').addEventListener(event, (e) => {
-        if (e.type === 'wheel') {
+    // Add keyboard navigation for search results
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
             e.preventDefault();
-            const direction = e.deltaY > 0 ? 1 : -1;
-            const lineHeight = 14; // Assuming your line height is 14px
-            document.getElementById('codeInput').scrollTop = Math.max(0, Math.min(
-                document.getElementById('codeInput').scrollTop + (direction * lineHeight),
-                document.getElementById('codeInput').scrollHeight - document.getElementById('codeInput').clientHeight
-            ));
-        }
-        lineNumbersDiv.scrollTop = document.getElementById('codeInput').scrollTop; // Sync line numbers with textarea scroll
-        updateCurrentLine();
-        updateSliderAndLayerPositions();
-        logCurrentLine();
-    });
-});
-
-
-
-
-//// CREATE GEOMETRY FUNCTIONS ////
-function setupGeometry(start, end, isPrinting, isRapidMove, eValue) {
-    if (thickLines && isPrinting) {
-        return createSquishedCylinderGeometry(start, end, eValue);
-    } else {
-        return createLineGeometry(start, end, isPrinting, isRapidMove);
-    }
-}
-
-function createLineGeometry(start, end, isPrinting, isRapidMove) {
-    let geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
-    let materialColor = isPrinting ? printingColor : (isRapidMove ? rapidMoveColor : travelColor);
-    let lineWidth = isPrinting ? 2 : 1; // Thinner for travel lines, adjust as needed
-
-    let material = new THREE.LineBasicMaterial({
-        color: materialColor,
-        linewidth: lineWidth,
-        transparent: true,
-        opacity: isPrinting ? PRINTING_OPACITY : NON_PRINTING_OPACITY
-    });
-
-    return new THREE.Line(geometry, material);
-}
-
-function createSquishedCylinderGeometry(start, end, eValue) {
-
-    width = 0.4;
-    height = 0.2;
-
-    width = Math.max(0.01, width);
-    height = Math.max(0.01, height);
-
-    const pathLength = start.distanceTo(end);
-    const boxGeometry = new THREE.BoxGeometry(width, height, pathLength);
-	
-    boxGeometry.computeVertexNormals();
-	
-    const material = new THREE.MeshPhongMaterial({
-        color: 0x00CC00, // Green color
-        transparent: true,
-        opacity: 1,
-        shininess: 50,
-    });
-
-    // Create the mesh
-    const shape = new THREE.Mesh(boxGeometry, material);
-
-    // Calculate midpoint between start and end
-    const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    shape.position.copy(midPoint);
-
-    // Calculate direction vector
-    const direction = new THREE.Vector3().subVectors(end, start).normalize();
-
-    // Create a quaternion to align the geometry
-    const up = new THREE.Vector3(0, 1, 0); // Default "up" direction (Y-axis)
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
-    shape.setRotationFromQuaternion(quaternion);
-
-    // Rotate to ensure geometry is flat on the build plate
-    shape.rotateX(Math.PI / 2); // Align the flat surface to the XY plane
-
-    if (!scene.getObjectByName('directionalLight')) {
-        addLightingToScene();
-    }
-
-    return shape;
-}
-
-
-function addLightingToScene() {
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(1, 1, 1);
-    directionalLight.name = 'directionalLight';
-    scene.add(directionalLight);
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambientLight);
-}
-
-
-
-
-
-/////////Play Button////////////
-let isPlaying = false;
-let stepsPerSecond = 1; // Default to 1 step per second for 1x speed
-let speedMultipliers = {
-    '16x': 420,
-    '8x': 60,
-    '4x': 20,
-    '2x': 10,
-    '1x': 1,
-    '-1x': -1,
-    '-2x': -10,
-    '-4x': -20,
-    '-8x': -60,
-    '-16x': -420
-};
-
-let currentSpeed = '4x';
-
-function playGCode() {
-    if (!isPlaying) {
-        isPlaying = true;
-        document.getElementById('play-button').textContent = '⏸️'; // Pause icon
-        let lineHeight = 14;
-        let stepInterval = 1000 / Math.abs(speedMultipliers[currentSpeed]); // Use absolute value for interval calculation
-        const direction = speedMultipliers[currentSpeed] < 0 ? -1 : 1; // Determine scroll direction
-        
-        playbackInterval = setInterval(() => {
-            const currentLine = Math.floor(textarea.scrollTop / lineHeight);
-            const lines = textarea.value.split('\n');
-            
-            if (currentLine + direction >= 0 && currentLine + direction < lines.length) {
-                textarea.scrollTop += direction * lineHeight;
-                lineNumbersDiv.scrollTop = textarea.scrollTop;
-                updateSliderAndLayerPositions();
-                logCurrentLine();
-                updateCurrentLine(); // Update the 3D view
+            if (e.shiftKey) {
+                prevResult();
             } else {
-                stopPlayback();
+                nextResult();
             }
-        }, stepInterval);
-    } else {
-        stopPlayback();
-    }
-}
-
-function stopPlayback() {
-    clearInterval(playbackInterval);
-    isPlaying = false;
-    document.getElementById('play-button').textContent = '▶️'; // Play icon
-}
-
-function adjustSpeed(change) {
-    let speeds = Object.keys(speedMultipliers);
-    let currentIndex = speeds.indexOf(currentSpeed);
-    currentIndex = (currentIndex - change + speeds.length) % speeds.length; // Changed to -change for reversing button functionality
-    currentSpeed = speeds[currentIndex];
-    document.getElementById('speed-display').textContent = currentSpeed;
-    
-    if (isPlaying) {
-        stopPlayback();
-        playGCode(); // Restart with new speed
-    }
-}
-
-document.getElementById('play-button').addEventListener('click', playGCode);
-document.getElementById('fast-forward').addEventListener('click', () => adjustSpeed(1)); // Fast forward increases speed
-document.getElementById('slow-down').addEventListener('click', () => adjustSpeed(-1)); // Slow down decreases speed
-
-// Initial setup
-document.getElementById('speed-display').textContent = currentSpeed;
-
-// Space bar toggle functionality, but only if textarea is not focused
-document.addEventListener('keydown', function(e) {
-    if (e.code === 'Space' && document.activeElement !== textarea) {
-        e.preventDefault(); // Prevent default space bar action like scrolling
-        playGCode(); // This will toggle between play and pause due to how `playGCode` is set up
-    }
-});
-//////////End Play Button/////////
-
-
-
-
-
-////Clear screen////
-document.getElementById('clear-display').addEventListener('click', function() {
-    document.getElementById('codeInput').value = '';
-    document.getElementById('line-numbers').innerHTML = '';
-    document.getElementById('current-line-display').textContent = '';
-    document.getElementById('gcode-command-name').textContent = '';
-    document.getElementById('gcode-command-description').textContent = '';
-    textarea.scrollTop = 0;
-    document.getElementById('slider').style.top = '0px';
-    document.getElementById('layer-slider').style.top = '0px';
-    document.getElementById('current-z-height').textContent = 'Z: 0.00';
-    currentZHeight = 0; 
-    currentStepIndex = 0; 
-    document.getElementById('render-limit').value = 200;
-    document.getElementById('render-limit-display').value = 200;
-    sliceLimit = 200;
-
-    allLineSegments.forEach(segment => {
-        if (segment.line) {
-            scene.remove(segment.line);
-            if (segment.line.parent === cube) cube.remove(segment.line);
-            if (segment.line.geometry) segment.line.geometry.dispose();
-            if (segment.line.material) segment.line.material.dispose();
         }
     });
-    allLineSegments = [];
 
-    if (isPlaying) {
-        stopPlayback();
+    searchInitialized = true;
+}
+
+
+//// End Search ////
+
+
+
+function updateInfoPanel(lineNumber, isHoverMode = false) {
+    const line = editor.getLine(lineNumber + 1);
+    if (!line) return;
+
+    // Get the current-line element
+    const currentLineElement = document.querySelector('.current-line');
+
+    if (searchResults.length > 0 && !isHoverMode) {
+        const currentIndex = currentSearchIndex + 1;
+        currentLineElement.textContent = 
+            `Result ${currentIndex}/${searchResults.length}: ${line}`;
+    } else {
+        // Clear the result info if no search is active or in hover mode
+        currentLineElement.textContent = line;
     }
 
-    renderer.render(scene, camera);
-    sceneChanged = false;
-});
+    // Update styling based on hover state
+    if (isHoverMode) {
+        currentLineElement.style.color = '#0088FF';  // Blue color for hover
+    } else {
+        currentLineElement.style.color = '#b5e853';  // Original green color
+    }
 
-
-
-
-
-document.getElementById('load-file-button').addEventListener('click', function() {
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.gcode,.gco,.g'; 
-    
-    input.click();
-
-    input.addEventListener('change', function(event) {
-        let file = event.target.files[0];
-        if (file) {
-            showLoadingScreen();
-            handleFile(file);
-        }
-    });
-});
-
-
-
-
-//// Drag and drop ////
-document.addEventListener('dragover', function(e) {
-    e.preventDefault();
-});
-
-document.addEventListener('drop', function(e) {
-    e.preventDefault();
-    
-    showLoadingScreen();
-
-    if (e.dataTransfer.items) {
-        for (let i = 0; i < e.dataTransfer.items.length; i++) {
-            if (e.dataTransfer.items[i].kind === 'file') {
-                let file = e.dataTransfer.items[i].getAsFile();
-                if (file.type === 'text/plain' || 
-                    file.name.endsWith('.gcode') || 
-                    file.name.endsWith('.gco') || 
-                    file.name.endsWith('.g')) {
-                    handleFile(file);
-                    break;
-                }
-            }
+    const cleanedLine = line.trim().toUpperCase();
+    const match = cleanedLine.match(/^G\d+/);
+    if (match) {
+        const command = match[0];
+        const commandInfo = gcodeCommands.find(cmd => cmd.command === command);
+        
+        if (commandInfo) {
+            document.querySelector('.command-info').innerHTML = 
+                '<div class="name">' + commandInfo.name + '</div>' +
+                '<div class="description">' + commandInfo.description + '</div>';
+        } else {
+            document.querySelector('.command-info').innerHTML = '<div class="name">Unknown G-code Command</div>';
         }
     } else {
-        for (let i = 0; i < e.dataTransfer.files.length; i++) {
-            let file = e.dataTransfer.files[i];
-            if (file.type === 'text/plain' || 
-                file.name.endsWith('.gcode') || 
-                file.name.endsWith('.gco') || 
-                file.name.endsWith('.g')) {
-                handleFile(file);
-                break;
-            }
-        }
+        document.querySelector('.command-info').innerHTML = '';
     }
-});
+
+    const coordInfo = coordinates[lineNumber] || {}; 
+    document.getElementById('z-height').textContent = 
+        coordInfo.z ? coordInfo.z.toFixed(2) : '0.00';
+    
+    document.getElementById('pos-mode').textContent = 
+        coordInfo.isRelative ? 'Relative' : 'Absolute';
+    
+    document.getElementById('e-total').textContent = 
+        coordInfo.eTotal ? coordInfo.eTotal.toFixed(2) : '0.00';
+    document.getElementById('feed-rate').textContent = 
+        coordInfo.f || '0';
+}
 
 
-function handleFile(file) {
-    let reader = new FileReader();
-    reader.onload = function(e) {
-        const clipboardData = e.target.result;
-		
-        thickLines = false; // Set this before parsing G-code
-        document.getElementById('toggle-thick-lines').textContent = "║";   
-		
-        // Instead of directly setting the value, we'll mimic the paste behavior
-        textarea.value = clipboardData;
-        
-        // Update line numbers
-        const codeLines = textarea.value.split('\n');
-        lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
-        
-        // Reset selections and scroll positions
-        textarea.selectionStart = textarea.selectionEnd = 0;
-        textarea.scrollTop = 0;
-        lineNumbersDiv.scrollTop = 0;
-        
-        // Update G-code visualization and UI elements
-        parseGCode(textarea.value, showTravelLines);
+// Define loading steps
+let gcodeLoadingSteps = [
+    { step: 'Parsing G-code', progress: 0 },
+    { step: 'Rendering Model', progress: 50 }
+];
 
-        hideLoadingScreen();
-        
-        updatePaddingAndEnsure(0);
 
-        updateSliderAndLayerPositions();
+function showLoadingScreen() {
+    document.getElementById('gcode-loading-screen').style.display = 'flex';
+}
 
-        logCurrentLine();
-    };
-    reader.readAsText(file);
+function hideLoadingScreen() {
+    document.getElementById('gcode-loading-screen').style.display = 'none';
+}
+
+function updateProgress(status, progress) {
+    document.querySelector('.current-line').textContent = `${status}... ${Math.round(progress)}%`;
+}
+
+function displayPerformanceStats(timeTaken) {
+    const currentLineElement = document.querySelector('.current-line');
+    if (currentLineElement) {
+        currentLineElement.textContent = `Model loaded in ${timeTaken.toFixed(2)} seconds`;
+    }
 }
 
 
 
-document.getElementById('save-gcode-button').addEventListener('click', function() {
-    const textToSave = document.getElementById('codeInput').value;
-    const filename = 'gcode_export.gcode';
-    const blob = new Blob([textToSave], {type: "text/plain;charset=utf-8"});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link); // Required for Firefox
-    link.click();
-    document.body.removeChild(link); 
-
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-});
 
 
-
-
+//// ADJUST BUILD PLATE SIZE ////
 
 function adjustSceneForNewDimensions(newBuildPlateY, newBuildPlateX) {
     ({ scene, camera, renderer, cube, setupEventListeners, renderIfNeeded, updateTransformations, DEFAULT_POSITION, nozzle } = setup3js(newBuildPlateX, newBuildPlateY));
 
     buildPlateX = newBuildPlateX;
     buildPlateY = newBuildPlateY;
-	
+    
     // Remove old canvas and append new renderer DOM element
     const canvasContainer = document.getElementById('canvasContainer');
     if (canvasContainer.firstChild) {
@@ -1322,27 +2680,37 @@ function adjustSceneForNewDimensions(newBuildPlateY, newBuildPlateX) {
     setupEventListeners(renderer.domElement);
 
     // Clear existing line segments and reset variables
-    allLineSegments.forEach(segment => {
-        if (segment.line) {
-            scene.remove(segment.line);
-            if (segment.line.geometry) segment.line.geometry.dispose();
-            if (segment.line.material) segment.line.material.dispose();
-        }
-    });
+    const line = scene.getObjectByName("allLines");
+    if (line) {
+        scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+    }
+
+    // Reset scene-specific variables
     allLineSegments = [];
     currentStepIndex = 0;
     currentZHeight = 0;
     sceneChanged = false;
-    // Add nozzle to the new cube
-    cube.add(nozzle); 
 
-    if (document.getElementById('codeInput').value) {
-        parseGCode(document.getElementById('codeInput').value, showTravelLines);
+    // Redraw coordinates with new dimensions
+    if (coordinates.length > 0) {
+        drawCoordinates(coordinates);
     }
 
+    // Update line visibility based on current scroll position and render limit
+    const scrollInfo = editor.getScrollInfo();
+    const renderLimit = parseInt(document.getElementById('render-limit-display').value, 10) || 200;
+    updateVisibleLines(scrollInfo.top, renderLimit);
+
+    // Add nozzle to the new cube
+    cube.add(nozzle); 
     scene.add(cube);
     renderIfNeeded();
 }
+
+
+
 
 ['buildPlateX', 'buildPlateY'].forEach(id => {
     document.getElementById(id).addEventListener('keyup', debounceForBuildplate(function() {
@@ -1367,630 +2735,327 @@ function debounceForBuildplate(func, wait) {
 
 
 
+/// Play/Fast Scroll ///
 
+const speedSlider = document.getElementById('speed-slider');
+const customScrollbar = document.getElementById('custom-scrollbar');
+const scrollUpButton = document.getElementById('scroll-up');
+const scrollDownButton = document.getElementById('scroll-down');
+const fastPlayButton = document.getElementById('fast-play-button');
+const speedDisplay = document.getElementById('fast-speed-display');
 
+let animationFrameId = null;
+let isScrolling = false;
+let isFastScrolling = false;
+let currentSpeedIndex = 6;
+let lastTime = 0;
+let playbackInterval = null;
+let currentLine = 0;
+let lastDirection = 1;
 
+const SPEEDS = [
+   { multiplier: -50, baseSpeed: 0.4, type: 'animation' },
+   { multiplier: -20, baseSpeed: 0.06, type: 'animation' },
+   { multiplier: -10, interval: 50, type: 'interval' },
+   { multiplier: -5, interval: 100, type: 'interval' },
+   { multiplier: 5, interval: 100, type: 'interval' },
+   { multiplier: 10, interval: 50, type: 'interval' },
+   { multiplier: 20, baseSpeed: 0.06, type: 'animation' },
+   { multiplier: 50, baseSpeed: 0.4, type: 'animation' },
+];
 
-
-renderIfNeeded();
-</script>
-    
-    
-
-<!--////////////////BEGIN CODE PANE////////////////////////////////////////////-->
-<script>
-let END_PADDING = '';
-let initialSetupDone = false;
-
-function updatePaddingAndEnsure(cursorPos) {
-    const lines = textarea.value.split('\n');
-    const visibleLines = Math.floor(textarea.clientHeight / 14.5);
-    
-    END_PADDING = '\n'.repeat(Math.max(visibleLines + 1));
-    
-    // Find last non-empty line
-    let lastNonEmptyLineIndex = lines.length - 1;
-    while (lastNonEmptyLineIndex >= 0 && lines[lastNonEmptyLineIndex].trim() === '') {
-        lastNonEmptyLineIndex--;
-    }
-    
-    textarea.value = lines.slice(0, lastNonEmptyLineIndex + 1).join('\n') + END_PADDING;
-    textarea.setSelectionRange(cursorPos, cursorPos);
+function updateSpeedDisplay() {
+    speedDisplay.textContent = `${SPEEDS[currentSpeedIndex].multiplier}x`;
 }
 
-const pane = document.getElementById('draggable-pane');
-const handle = document.getElementById('resize-handle');
-let isDragging = false;
-let startX = 0;
-let startWidth = 0;
-
-handle.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    startX = e.clientX;
-    startWidth = parseInt(getComputedStyle(pane).width, 10);
-    e.preventDefault();
-});
-
-let touchStartX = 0;
-let touchStartWidth = 0;
-let isTouchDragging = false;
-
-handle.addEventListener('mousedown', handleMouseOrTouchStart);
-handle.addEventListener('touchstart', handleMouseOrTouchStart, { passive: false });
-
-function handleMouseOrTouchStart(e) {
-    if (e.type === 'touchstart') {
-        e.preventDefault();
-        touchStartX = e.touches[0].clientX;
-        touchStartWidth = parseInt(getComputedStyle(pane).width, 10);
-        isTouchDragging = true;
-    } else {
-        isDragging = true;
-        startX = e.clientX;
-        startWidth = parseInt(getComputedStyle(pane).width, 10);
+function cleanupAnimations() {
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    if (playbackInterval) {
+        clearInterval(playbackInterval);
+        playbackInterval = null;
     }
 }
 
-document.addEventListener('mousemove', handleMouseOrTouchMove);
-document.addEventListener('touchmove', handleMouseOrTouchMove, { passive: false });
-
-function handleMouseOrTouchMove(e) {
-    if (isDragging || isTouchDragging) {
-        e.preventDefault();
-        const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const newWidth = Math.max(50, (isTouchDragging ? touchStartWidth : startWidth) - (currentX - (isTouchDragging ? touchStartX : startX)));
+function startIntervalScroll(direction) {
+    cleanupAnimations();
+    
+    const speed = SPEEDS[currentSpeedIndex];
+    const scrollInfo = editor.getScrollInfo();
+    currentLine = Math.floor(scrollInfo.top / lineHeight);
+    
+    // Use the speed multiplier's sign if no direction is provided
+    lastDirection = direction || Math.sign(speed.multiplier);
+    
+    playbackInterval = setInterval(() => {
+        currentLine += lastDirection;
+        if (currentLine <= 0) {
+            currentLine = 0;
+            lastDirection = 1;
+        } else if (currentLine >= editor.lineCount() - 1) {
+            currentLine = editor.lineCount() - 1;
+            lastDirection = -1;
+        }
         
-        pane.style.width = `${newWidth}px`;
-        pane.style.setProperty('--pane-width', `${newWidth}px`);
-        document.getElementById('ui-buttons').style.right = `calc(${newWidth}px + 10px)`;
-    }
-}
-
-document.addEventListener('mouseup', handleMouseOrTouchEnd);
-document.addEventListener('touchend', handleMouseOrTouchEnd);
-
-function handleMouseOrTouchEnd(e) {
-    isDragging = false;
-    isTouchDragging = false;
-}
-
-document.addEventListener('mouseup', () => isDragging = false);
-
-const lineNumbersDiv = document.getElementById("line-numbers");
-const slider = document.getElementById('slider');
-const sliderContainer = document.getElementById('slider-container');
-const layerSlider = document.getElementById('layer-slider');
-const layerSliderContainer = document.getElementById('layer-slider-container');
-
-
-
-
-function handleArrowKeys(e) {
-    const isTextareaFocused = document.activeElement === textarea;
-
-    if (isTextareaFocused) {
-        // Allow default behavior for editing when textarea is focused
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            // Prevent scrolling if we're at the top or bottom of the textarea
-            const cursorPosition = textarea.selectionStart;
-            const lines = textarea.value.split('\n');
-            const currentLineNumber = textarea.value.substr(0, cursorPosition).split('\n').length - 1;
-            const totalLines = lines.length;
-
-            const isAtFirstLine = currentLineNumber === 0;
-            const isAtLastLine = currentLineNumber === totalLines - 1;
-
-            if (e.shiftKey) {
-                // If Shift is pressed, move by search term up or down
-                e.preventDefault();
-                navigateLayer(e.key === 'ArrowUp' ? 'up' : 'down');
-            } else if ((e.key === 'ArrowUp' && isAtFirstLine) || 
-                       (e.key === 'ArrowDown' && isAtLastLine)) {
-                e.preventDefault();
-                scrollTextarea(e.key === 'ArrowUp' ? -1 : 1);
-            } else {
-                // Do nothing, let the default action happen (cursor movement)
-            }
+        editor.scrollTo(null, currentLine * lineHeight);
+        updateInfoPanel(currentLine);
+        
+        if (scrollThumb) {
+            const newScrollInfo = editor.getScrollInfo();
+            const thumbPosition = (newScrollInfo.top / newScrollInfo.height) * 
+                (editorContainer.clientHeight - scrollThumb.clientHeight);
+            scrollThumb.style.top = `${thumbPosition}px`;
         }
-    } else {
-        // If not focused on textarea, use scrolling
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (e.shiftKey) {
-                navigateLayer(e.key === 'ArrowUp' ? 'up' : 'down');
-            } else {
-                scrollTextarea(e.key === 'ArrowUp' ? -1 : 1);
-            }
-        }
-    }
+    }, speed.interval);
 }
 
-document.addEventListener('keydown', handleArrowKeys);
+function startScrollAnimation(direction, clickY = null) {
+    cleanupAnimations();
+    
+    const currentSpeed = SPEEDS[currentSpeedIndex];
 
-searchInput.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); 
-        if (event.shiftKey) {
-            layerUpButton.click();
+    lastDirection = direction || Math.sign(currentSpeed.multiplier);
+    lastTime = performance.now();
+    
+    if (currentSpeed.type === 'interval' && !clickY) {
+        startIntervalScroll(lastDirection);
+        return;
+    }
+
+    function animate(currentTime) {
+        if (!isScrolling) return;
+        
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        
+        const thumbHeight = scrollThumb.clientHeight;
+        const scrollbarHeight = customScrollbar.clientHeight;
+        const currentThumbTop = parseInt(getComputedStyle(scrollThumb).top);
+        
+        let newThumbTop = currentThumbTop;
+        
+        if (clickY !== null) {
+            const scrollDown = clickY > (currentThumbTop + thumbHeight);
+            const scrollUp = clickY < currentThumbTop;
+            if (scrollDown || scrollUp) {
+                const distance = 2 * deltaTime;
+                newThumbTop += (scrollDown ? distance : -distance);
+            }
         } else {
-            layerDownButton.click();
-        }
-    }
-});
-
-
-document.getElementById('codeInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();  
-        const lineHeight = 14; 
-        this.scrollTop += lineHeight;
-        return false; 
-    }
-});
-
-
-
-function scrollTextarea(direction) {
-    const lineHeight = 14;
-    textarea.scrollTop += direction * lineHeight;
-    textarea.scrollTop = Math.max(0, Math.min(textarea.scrollHeight - textarea.clientHeight, textarea.scrollTop));
-    
-    lineNumbersDiv.scrollTop = textarea.scrollTop;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-}
-
-
-
-document.getElementById('codeInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
-        
-        // Insert a newline at the cursor position
-        this.value = this.value.substring(0, start) + '\n' + this.value.substring(end);
-        
-        // Set the new cursor position
-        this.selectionStart = this.selectionEnd = start + 1;
-        
-        // Update line numbers and current line display, but don't change scroll position
-        updatePaddingAndEnsure(start + 1);
-        const codeLines = this.value.split('\n');
-        lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
-        logCurrentLine();
-        
-        return false;
-    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault(); 
-        
-        const lineHeight = 14;
-        const direction = e.key === 'ArrowDown' ? 1 : -1;
-        
-        this.scrollTop = Math.max(0, Math.min(this.scrollTop + direction * lineHeight, this.scrollHeight - this.clientHeight));
-
-        const lines = this.value.split('\n');
-        const cursorPosition = this.selectionStart;
-        const currentLineIndex = this.value.substr(0, cursorPosition).split('\n').length - 1;
-        let newLineIndex = currentLineIndex + direction;
-        
-        if (newLineIndex >= 0 && newLineIndex < lines.length) {
-            let newLineStart = 0;
-            for (let i = 0; i < newLineIndex; i++) {
-                newLineStart += lines[i].length + 1;
+            const delta = currentSpeed.baseSpeed * lastDirection * deltaTime;
+            newThumbTop += delta;
+            
+            if (newThumbTop <= 0) {
+                newThumbTop = 0;
+                if (lastDirection < 0) {
+                    lastDirection = 1;
+                }
+            } else if (newThumbTop >= scrollbarHeight - thumbHeight) {
+                newThumbTop = scrollbarHeight - thumbHeight;
+                if (lastDirection > 0) {
+                    lastDirection = -1;
+                }
             }
-            this.selectionStart = this.selectionEnd = newLineStart;
         }
         
-        lineNumbersDiv.scrollTop = this.scrollTop;
-        updateSliderAndLayerPositions();
-        logCurrentLine();
+        scrollThumb.style.top = `${newThumbTop}px`;
+        
+        const thumbPosition = newThumbTop / (scrollbarHeight - thumbHeight);
+        const targetScroll = thumbPosition * editor.getScrollInfo().height;
+        editor.scrollTo(null, targetScroll);
+        updateInfoPanel(Math.floor(targetScroll / lineHeight));
+        
+        if (isScrolling) {
+            animationFrameId = requestAnimationFrame(animate);
+        }
     }
-});
+    
+    animationFrameId = requestAnimationFrame(animate);
 
+    document.addEventListener('mouseup', stopScrollingAndSnap);
+    document.addEventListener('mouseleave', stopScrollingAndSnap);
 
+    function stopScrollingAndSnap() {
+        if (!isFastScrolling) {
+            isScrolling = false;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            
+            const scrollInfo = editor.getScrollInfo();
+            const currentScroll = scrollInfo.top;
+            const nearestLine = Math.round(currentScroll / lineHeight);
+            editor.scrollTo(null, nearestLine * lineHeight);
+            updateInfoPanel(nearestLine);
 
-//// Auto Focus Code Area On Page Load ////
-document.addEventListener('DOMContentLoaded', function() {
-    const textarea = document.getElementById('codeInput');
-    if (textarea) {
-        setTimeout(function() {
-            textarea.focus();
-        }, 100);
+            const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+            const scrollRatio = (nearestLine * lineHeight) / maxScroll;
+            const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+            scrollThumb.style.top = `${newThumbTop}px`;
+
+            document.removeEventListener('mouseup', stopScrollingAndSnap);
+            document.removeEventListener('mouseleave', stopScrollingAndSnap);
+        }
     }
-});
+}
 
+function stopScrolling() {
+    if (isFastScrolling) return;
+    isScrolling = false;
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    if (playbackInterval) {
+        clearInterval(playbackInterval);
+        playbackInterval = null;
+    }
+}
 
-textarea.addEventListener('input', function() {
-    const cursorPos = this.selectionStart;
-    if (!initialSetupDone) {
-        updatePaddingAndEnsure(cursorPos);
-        initialSetupDone = true;
+function toggleFastScroll() {
+    if (isFastScrolling) {
+        isScrolling = false;
+        isFastScrolling = false;
+        
+        // Stop any current animation or interval
+        cleanupAnimations();
+
+        // Snap to nearest line on pause
+        const scrollInfo = editor.getScrollInfo();
+        const currentScroll = scrollInfo.top;
+        const nearestLine = Math.round(currentScroll / lineHeight);
+        editor.scrollTo(null, nearestLine * lineHeight);
+        updateInfoPanel(nearestLine);
+        
+        // Update scroll thumb position to snapped line
+        const maxScroll = scrollInfo.height - scrollInfo.clientHeight;
+        const scrollRatio = (nearestLine * lineHeight) / maxScroll;
+        const newThumbTop = scrollRatio * (editorContainer.clientHeight - scrollThumb.clientHeight);
+        scrollThumb.style.top = `${newThumbTop}px`;
+
+        fastPlayButton.textContent = '▶️';
     } else {
-        updatePaddingAndEnsure(cursorPos);
+        isScrolling = true;
+        isFastScrolling = true;
+        const speed = SPEEDS[currentSpeedIndex];
+        if (speed.type === 'interval') {
+            startIntervalScroll(lastDirection);
+        } else {
+            startScrollAnimation(lastDirection);
+        }
+        fastPlayButton.textContent = '⏸';
     }
-
-    const codeLines = this.value.split('\n');
-    lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
-
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-});
-
-
-lineNumbersDiv.addEventListener('wheel', e => {
-    e.preventDefault();
-    textarea.dispatchEvent(new WheelEvent('wheel', e));
-});
-
-//// touch event listeners to prevent scrolling ////
-lineNumbersDiv.addEventListener('touchstart', preventTouchScroll, { passive: false });
-lineNumbersDiv.addEventListener('touchmove', preventTouchScroll, { passive: false });
-
-function preventTouchScroll(e) {
-    e.preventDefault(); 
-    e.stopPropagation(); 
+    updateSpeedDisplay();
 }
 
-
-
-
-//// Pen Click Support ////
-document.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "pen") {
-        //console.log("S Pen interaction detected");
-        // Treat it as a mouse click
-        handlePenAsMouseClick(event);
+scrollUpButton.addEventListener('mousedown', () => {
+    if (!isFastScrolling) {
+        isScrolling = true;
+        startScrollAnimation(-1);
     }
 });
 
-function handlePenAsMouseClick(event) {
-    const simulatedClick = new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        clientX: event.clientX,
-        clientY: event.clientY,
-    });
-    event.target.dispatchEvent(simulatedClick);
-}
-
-
-
-
-function updateSliderAndLayerPositions() {
-    const scrollableHeight = Math.max(textarea.scrollHeight - textarea.clientHeight, 42);
-    const scrollRatio = textarea.scrollTop / scrollableHeight;
-
-    slider.style.top = `${(sliderContainer.clientHeight - slider.offsetHeight) * scrollRatio}px`;
-
-    const lines = textarea.value.split('\n');
-    let layers = lines.reduce((acc, line, i) => {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
-        return acc;
-    }, []);
-
-    if (layers.length) {
-        let currentLayer = layers.find(i => i * 14 > textarea.scrollTop) || layers[layers.length - 1];
-        layerSlider.style.top = `${(currentLayer / (lines.length - 1)) * (layerSliderContainer.clientHeight - layerSlider.offsetHeight)}px`;
+scrollDownButton.addEventListener('mousedown', () => {
+    if (!isFastScrolling) {
+        isScrolling = true;
+        startScrollAnimation(1);
     }
-}
+});
 
+scrollUpButton.addEventListener('mouseup', stopScrolling);
+scrollDownButton.addEventListener('mouseup', stopScrolling);
+scrollUpButton.addEventListener('mouseleave', stopScrolling);
+scrollDownButton.addEventListener('mouseleave', stopScrolling);
 
+customScrollbar.addEventListener('mousedown', function(e) {
+    if (e.target !== scrollThumb && !isFastScrolling) {
+        isScrolling = true;
+        startScrollAnimation(null, e.clientY - customScrollbar.getBoundingClientRect().top);
+    }
+});
 
-function logCurrentLine() {
-    const lineHeight = 14;
-    const currentLine = Math.floor(textarea.scrollTop / lineHeight);
+fastPlayButton.addEventListener('click', toggleFastScroll);
+
+document.addEventListener('mouseup', stopScrolling);
+document.addEventListener('mouseleave', stopScrolling);
+
+document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') {
+        if (document.activeElement === searchInput || 
+            document.activeElement === editor.getWrapperElement() || 
+            document.activeElement.matches('.CodeMirror *')) {
+            return; // Do nothing if focused on search input or editor
+        }
+        e.preventDefault();
+        toggleFastScroll();
+    }
+});
+
+speedSlider.addEventListener('input', function(e) {
+    currentSpeedIndex = parseInt(e.target.value);
+    updateSpeedDisplay();
     
-    let lineStart = 0;
-    for (let i = 0; i < currentLine; i++) {
-        lineStart = textarea.value.indexOf('\n', lineStart) + 1;
-        if (lineStart === 0) break;
+    if (isFastScrolling) {
+        const speed = SPEEDS[currentSpeedIndex];
+        isScrolling = true;
+        
+        lastDirection = Math.sign(speed.multiplier);
+        
+        if (speed.type === 'interval') {
+            cleanupAnimations();
+            startIntervalScroll(lastDirection);
+        } else {
+            cleanupAnimations();
+            startScrollAnimation(lastDirection);
+        }
     }
-
-    let lineEnd = textarea.value.indexOf('\n', lineStart);
-    if (lineEnd === -1) lineEnd = textarea.value.length; 
-    const currentLineText = textarea.value.slice(lineStart, lineEnd);
-    document.getElementById('current-line-display').innerHTML = '<span style="font-size:18px">' + currentLineText + '</span>';
-    
-    const matchingCommand = gcodeCommands.find(cmd => {
-        const commandPattern = new RegExp(`^${cmd.command}\\b`, 'i');
-        return commandPattern.test(currentLineText.trim());
-    });
-
-    if (matchingCommand) {
-        document.getElementById('gcode-command-name').innerHTML = '<hr><u><strong>' + `${matchingCommand.name}` + '</strong></u>';
-        document.getElementById('gcode-command-description').innerHTML = `${matchingCommand.description}`;
-    } else {
-        document.getElementById('gcode-command-name').innerHTML = '';
-        document.getElementById('gcode-command-description').innerHTML = '';
-    }
-}
-
-
-
-
-
-
-function startSliderMove(e) {
-	e.stopPropagation();
-    e.preventDefault();
-    let startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-    let initialScrollTop = textarea.scrollTop;
-
-    const moveSlider = (event) => {
-        event.preventDefault();
-        const currentY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
-        const deltaY = currentY - startY;
-        const scrollableHeight = Math.max(textarea.scrollHeight - textarea.clientHeight, 42);
-        let newScrollTop = initialScrollTop + (deltaY * scrollableHeight / (sliderContainer.clientHeight - slider.offsetHeight));
-        newScrollTop = Math.round(newScrollTop / 14) * 14; // Snap to lines
-        newScrollTop = Math.max(0, Math.min(newScrollTop, scrollableHeight));
-
-        textarea.scrollTop = newScrollTop;
-        lineNumbersDiv.scrollTop = newScrollTop;
-        updateSliderAndLayerPositions();
-        logCurrentLine();
-    };
-
-    const stopMoveSlider = () => {
-        document.removeEventListener('mousemove', moveSlider);
-        document.removeEventListener('touchmove', moveSlider, { passive: false });
-        document.removeEventListener('mouseup', stopMoveSlider);
-        document.removeEventListener('touchend', stopMoveSlider, { passive: false });
-    };
-
-    document.addEventListener('mousemove', moveSlider);
-    document.addEventListener('touchmove', moveSlider, { passive: false });
-    document.addEventListener('mouseup', stopMoveSlider);
-    document.addEventListener('touchend', stopMoveSlider, { passive: false });
-}
-
-slider.addEventListener('mousedown', startSliderMove);
-slider.addEventListener('touchstart', startSliderMove, { passive: false });
-
-
-
-
-
-
-function startLayerSliderMove(e) {
-    e.preventDefault();
-    let startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-    let startSliderTop = parseInt(getComputedStyle(layerSlider).top, 10);
-
-    const moveLayerSlider = (event) => {
-        event.preventDefault();
-        const currentY = event.type === 'touchmove' ? event.touches[0].clientY : event.clientY;
-        const deltaY = currentY - startY;
-        let newTop = startSliderTop + deltaY;
-        const containerHeight = layerSliderContainer.clientHeight - layerSlider.offsetHeight;
-        newTop = Math.max(0, Math.min(newTop, containerHeight));
-
-        layerSlider.style.top = `${newTop}px`;
-        scrollToLayerByPosition(newTop);
-    };
-
-    const stopMoveLayerSlider = () => {
-        document.removeEventListener('mousemove', moveLayerSlider);
-        document.removeEventListener('touchmove', moveLayerSlider, { passive: false });
-        document.removeEventListener('mouseup', stopMoveLayerSlider);
-        document.removeEventListener('touchend', stopMoveLayerSlider, { passive: false });
-    };
-
-    document.addEventListener('mousemove', moveLayerSlider);
-    document.addEventListener('touchmove', moveLayerSlider, { passive: false });
-    document.addEventListener('mouseup', stopMoveLayerSlider);
-    document.addEventListener('touchend', stopMoveLayerSlider, { passive: false });
-}
-
-layerSlider.addEventListener('mousedown', startLayerSliderMove);
-layerSlider.addEventListener('touchstart', startLayerSliderMove, { passive: false });
-
-
-
-
-function scrollToLayerByPosition(position) {
-    const lines = textarea.value.split('\n');
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    let layers = lines.reduce((acc, line, i) => {
-        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
-        return acc;
-    }, []);
-
-    if (layers.length === 0) return;
-
-    const sliderHeight = layerSliderContainer.clientHeight - layerSlider.offsetHeight;
-    let layerIndex = Math.floor((position / sliderHeight) * layers.length);
-    layerIndex = Math.max(0, Math.min(layerIndex, layers.length - 1));
-
-    textarea.scrollTop = layers[layerIndex] * 14;
-    lineNumbersDiv.scrollTop = textarea.scrollTop;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-}
-const layerUpButton = document.getElementById('layer-up');
-const layerDownButton = document.getElementById('layer-down');
-
-layerUpButton.addEventListener('click', () => navigateLayer('up'));
-layerDownButton.addEventListener('click', () => navigateLayer('down'));
-
-function navigateLayer(direction) {
-    const lines = textarea.value.split('\n');
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    let layers = lines.reduce((acc, line, i) => {
-        if (line.toLowerCase().includes(searchTerm)) acc.push(i);
-        return acc;
-    }, []);
-
-    if (layers.length === 0) return;
-
-    let currentLayerIndex = layers.findIndex(layer => layer * 14 >= textarea.scrollTop);
-    if (direction === 'up') {
-        currentLayerIndex = Math.max(0, currentLayerIndex - 1);
-    } else { // down
-        currentLayerIndex = Math.min(currentLayerIndex + 1, layers.length - 1);
-        if (currentLayerIndex === -1) currentLayerIndex = layers.length - 1;
-    }
-
-    textarea.scrollTop = layers[currentLayerIndex] * 14;
-    lineNumbersDiv.scrollTop = textarea.scrollTop;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-}
-
-
-
-
-window.addEventListener('resize', () => {
-    updatePaddingAndEnsure(textarea.selectionStart);
 });
-
-
-document.getElementById('go-to-top').addEventListener('click', () => {
-    textarea.scrollTop = 0;
-    lineNumbersDiv.scrollTop = 0;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-});
-
-document.getElementById('go-to-bottom').addEventListener('click', () => {
-    textarea.scrollTop = textarea.scrollHeight;
-    lineNumbersDiv.scrollTop = textarea.scrollHeight;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-});
-
-document.getElementById('line-up').addEventListener('click', () => {
-    const lineHeight = 14;
-    textarea.scrollTop = Math.max(0, textarea.scrollTop - lineHeight);
-    lineNumbersDiv.scrollTop = textarea.scrollTop;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-});
-
-document.getElementById('line-down').addEventListener('click', () => {
-    const lineHeight = 14;
-    textarea.scrollTop = Math.min(textarea.scrollHeight - textarea.clientHeight, textarea.scrollTop + lineHeight);
-    lineNumbersDiv.scrollTop = textarea.scrollTop;
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-});
-
-
-textarea.addEventListener('blur', function() {
-    this.selectionStart = 0;
-    this.selectionEnd = 0;
-
-    const currentScrollTop = this.scrollTop;
-
-    setTimeout(() => {
-        this.selectionStart = 0;
-        this.selectionEnd = 0;
-        this.scrollTop = currentScrollTop;
-        lineNumbersDiv.scrollTop = currentScrollTop;
-        updateSliderAndLayerPositions();
-        logCurrentLine();
-    }, 0);
-});
-
-
-textarea.addEventListener('paste', function(e) {
-    const currentScrollTop = this.scrollTop;
-    e.preventDefault();
-
-    thickLines = false;
-    document.getElementById('toggle-thick-lines').textContent = "║";    
-
-    const start = this.selectionStart;
-    const clipboardData = e.clipboardData.getData('text');
-    
-    this.value = this.value.substring(0, start) + 
-                 clipboardData + 
-                 this.value.substring(this.selectionEnd);
-    
-    const codeLines = this.value.split('\n');
-    lineNumbersDiv.innerHTML = codeLines.map((_, i) => i + 1).join('<br>');
-    
-    this.selectionStart = this.selectionEnd = 0;
-    
-    parseGCode(this.value, showTravelLines);
-    updatePaddingAndEnsure(0);
-    updateSliderAndLayerPositions();
-    logCurrentLine();
-
-    this.scrollTop = currentScrollTop;
-    lineNumbersDiv.scrollTop = currentScrollTop;
-});
-
-
-
-
-function showLoadingScreen() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        loadingScreen.style.display = 'flex'; 
-    }
-}
-
-function hideLoadingScreen() {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        loadingScreen.style.display = 'none';
-    }
-}
-
-window.addEventListener('load', function() {
-    document.getElementById('full-body').style.visibility = 'visible';
-});
-
-
 
 
 //// Info Screen ////
-document.addEventListener('DOMContentLoaded', (event) => {
-    const infoButton = document.getElementById('info-button');
+document.getElementById('info-button').addEventListener('click', function() {
     const modal = document.getElementById('info-modal');
-    
-    if (infoButton && modal) {
-        infoButton.addEventListener('click', function() {
-            if (modal.style.display === "none" || modal.style.display === "") {
-                modal.style.display = "block";
-            } else {
-                modal.style.display = "none";
-            }
-        });
+    if (modal.style.display === "none" || modal.style.display === "") {
+        modal.style.display = "block";
+    } else {
+        modal.style.display = "none";
+    }
+});
 
+// Close modal
+document.getElementById('modal-close').addEventListener('click', function() {
+    document.getElementById('info-modal').style.display = "none";
+});
 
-        document.addEventListener('click', function(event) {
-            if (event.target !== modal && !modal.contains(event.target) && event.target !== infoButton) {
-                modal.style.display = "none";
-            }
-        });
-
-
-        const modalCloseButton = document.getElementById('modal-close');
-        if (modalCloseButton) {
-            modalCloseButton.addEventListener('click', function() {
-                modal.style.display = "none";
-            });
-        }
+// Close modal when clicking outside of it
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('info-modal');
+    if (event.target == modal) {
+        modal.style.display = "none";
     }
 });
 
 
 
-// Initial setup
-updatePaddingAndEnsure(0);
-updateSliderAndLayerPositions();
-logCurrentLine();
-document.getElementById('current-line-display').innerHTML = '<span style="font-size:18px;"><u>Gcoder V1</u><br><br> A gcode visualizer and editor for 3d printing. <br> <br> Input Gcode to begin.  </span>';
+document.getElementById('save-gcode-button').addEventListener('click', function() {
+    const textToSave = editor.getValue(); // Get content from CodeMirror editor
+    const filename = 'gcode_export.gcode';
+    const blob = new Blob([textToSave], {type: "text/plain;charset=utf-8"});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+});
 
 
-const initialPaneWidth = parseInt(getComputedStyle(pane).width, 10);
-document.getElementById('ui-buttons').style.right = `calc(${initialPaneWidth}px + 10px)`;
-document.getElementById('ui-buttons').style.right = `calc(${initialPaneWidth}px + 10px)`;
-</script>
+
+    </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Gcode Viewer and Editor
 
-A web-based tool for visualizing and editing G-code for 3D printing, built with Three.js. Enjoy the convenience and security of using it offline by downloading the files and running them locally on your desktop. Or you can check it out now at https://gygertech.com/gcoder
+A web-based tool for visualizing and editing G-code for 3D printing, built with Three.js and Codemirror. Enjoy the convenience and security of using it offline by downloading the files and running them locally on your desktop. Or you can check it out now at https://gygertech.com/gcoder
 
 ## Overview
 
@@ -20,8 +20,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 
 ### Performance Considerations
 
- - For larger gcode files over 30,000 lines, performance might vary based on hardware capabilities.
- - If your code is above 30k lines, (⬅️) will appear to click to update the visualization after editing.
+ - For larger gcode files over 1,000,000 lines, performance might vary based on hardware capabilities.
 
 ### Installation (or lack thereof)
 
@@ -34,7 +33,7 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 ### Usage
 
 - **Input G-code:** 
-  - Allows you to directly type, paste, load, or drag and drop G-code into the editor.
+  - Allows you to directly type, paste, or load G-code into the editor.
 
 - **Visualize:** 
   - The 3D visualization updates in real-time as you scroll through the G-code in the editor.
@@ -43,9 +42,8 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
 
 - **Interact:** 
   - Search: Search anything or by specific layer delimiter. Use Enter to go to the next match, Shift + Enter for the previous match.
-  - Measurement: Click on two points in the 3D visualization to measure distances in XY and Z planes.
-  - Search Slider (Far right scroll bar): A vertical slider that lets you jump to specific search terms by scrolling.
-
+  - Measurement: Turn on measure mode and click on two points in the 3D visualization to measure distances in XY and Z planes.
+  
    - Key Bindings:
       - Arrow Up/Down: Move to the next/previous G-code line.
       - Shift + Arrow Up/Down: Move by search phrase up or down.
@@ -66,10 +64,11 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
       - Orbit: Three finger touch and drag
 
   - Buttons for:
-      - Code Navigation: Move to previous (⬆️) or next (⬇️) line, go to top (⏫), or bottom (⏬)
-      - Toggle Views: Show/hide travel lines (🔹) and switch between thin and thick line representation (║).
-      - Simulation: Play or pause (▶️) and adjust simulation speed with (⏪) and (⏩).
-      - Search: Search up and down with (🔽) and (🔼).
+      - Toggle Travel Lines: Show/hide travel lines (🔹) 
+      - Toggle 3d Mesh Lines - Switch between simple line and 3d mesh line representation (🔳)
+      - Toggle Measure Mode = witch between measure mode and regular mode (📏)
+      - Simulation: Play or pause (▶️) and adjust simulation speed with the scroll speed slider.
+      - Search: Search up and down with (↑) and (↓).
 
 - **Save:** 
     - Save G-code: Saves the current G-code in the editor to a file.
@@ -81,6 +80,8 @@ This project provides a comprehensive interface for 3D printing enthusiasts to v
   - **three.js:** The Three.js library for 3D rendering (included for offline use).
   - **3.js:** Custom Three.js setup for the G-code visualization.
   - **gcodeCommands.js:** A JSON or JavaScript file defining G-code commands for quick reference.
+  - codemirror.min.css:** Codemirror's stylesheet.
+  - **codemirror.min.js:** Codemirror's js file.
 
 ## Contributing
 
@@ -99,6 +100,7 @@ This project is licensed under the [MIT License](LICENSE.md) - see the LICENSE.m
 ## Acknowledgments
 
 - Three.js for the amazing 3D library.
+- Codemirror for the easy to use code editor.
 - All contributors and testers who helped refine this tool.
 
 ## Contact
