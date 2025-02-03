@@ -1,4 +1,4 @@
-# Gcode Viewer and Editor
+# Gcode Viewer and Editor (gcoder V2)
 
 A web-based tool for visualizing and editing G-code for 3D printing, built with Three.js and Codemirror. Enjoy the convenience and security of using it offline by downloading the files and running them locally on your desktop. Or you can check it out now at https://gygertech.com/gcoder
 
